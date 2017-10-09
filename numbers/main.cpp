@@ -4,6 +4,7 @@
 #include <string.h>
 #include <libgen.h>
 #include <time.h>
+#include <ctype.h>
 
 // Read input text string and convert to a number.
 // The prefixes b, o, d, and h are used to set the input format.
@@ -91,6 +92,11 @@ printOutput(uint64_t value)
     printf("  oct: %lo\n", value);
     printf("  dec: %lu\n", value);
     printf("  hex: %lx\n", value);
+    if (uint64_t(int(value)) == value &&
+        isprint(int(value)))
+    {
+        printf("  asc: %c\n", int(value));
+    }
     printf("\n");
     printTime(value);
     printf("\n");
