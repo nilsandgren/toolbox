@@ -92,7 +92,7 @@ printOutput(uint64_t value)
     printf("  oct: %lo\n", value);
     printf("  dec: %lu\n", value);
     printf("  hex: %lx\n", value);
-    if (uint64_t(int(value)) == value &&
+    if (value <= 0xff &&
         isprint(int(value)))
     {
         printf("  asc: %c\n", int(value));
