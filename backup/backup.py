@@ -33,24 +33,21 @@ storages = [
 ]
 
 
-def hostname():
-    """Return the host name of this machine."""
-    return socket.gethostname()
-
-
-def trimmed_hostname(hostname):
+def get_hostname():
     """Return hostname without any domain suffix."""
+    hostname = socket.gethostname()
     return hostname.split('.')[0]
 
 
-def user():
+def get_username():
     """Get the name of the current user."""
     return getpass.getuser()
 
 
-def get_sources(user, hostname):
+def get_sources():
     """Get locations to back up based on user name and the hostname."""
-    hostname = trimmed_hostname(hostname)
+    hostname = get_hostname()
+    user = get_username()
     key = "{0}@{1}".format(user, hostname)
 
     try:
@@ -68,12 +65,13 @@ def get_sources(user, hostname):
         return None
 
 
-def get_destinations(user, hostname):
+def get_destinations():
     """Get the backup storages that are available on this machine."""
     available = []
 
     print "Backup destinations"
-    hostname = trimmed_hostname(hostname)
+    hostname = get_hostname()
+    user = get_username()
     for storage in storages:
         if os.path.isdir(storage):
             print "  Storage {0} is available".format(storage)
@@ -92,8 +90,8 @@ def main():
     """Main entry point."""
 
     # Get sources and destinations
-    sources = get_sources(user(), hostname())
-    destinations = get_destinations(user(), hostname())
+    sources = get_sources()
+    destinations = get_destinations()
 
     if not sources or not destinations:
         print "Exiting"
