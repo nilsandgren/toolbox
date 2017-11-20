@@ -1,0 +1,11 @@
+#!/bin/bash
+
+# rebase current branch on master and push to origin
+
+set -ex
+
+BRANCH=`git rev-parse --abbrev-ref HEAD`
+
+git fetch
+git rebase origin/master
+git push -f origin $BRANCH
