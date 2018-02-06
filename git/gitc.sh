@@ -12,7 +12,7 @@
 #
 #       Enter a branch number: 4
 #
-#     Switched to branch 'cocolate-test'
+#     Switched to branch 'chocolate-test'
 
 gitc() {
     # Get local branches as an array
