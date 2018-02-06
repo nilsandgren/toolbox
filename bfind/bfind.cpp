@@ -45,11 +45,12 @@ enum status_code
     k_status_error
 };
 
-enum search_string_format
+enum format
 {
-    k_ascii,   // ASCII search string e.g. hello
-    k_hex,     // hexadecimal search string e.g. 41d9761d
-    k_bin,     // binary search string e.g. 0110010110010100
+    k_ascii,   // ASCII text
+    k_dec,     // decimal
+    k_hex,     // hexadecimal
+    k_bin,     // binary
 };
 
 class configuration
@@ -57,20 +58,22 @@ class configuration
     public:
     configuration()
         : file(NULL)
-        , string_format(k_ascii)
-        , search_pattern(NULL)
-        , search_pattern_length(0)
+        , pattern(NULL)
+        , pattern_length(0)
+        , pattern_format(k_ascii)
         , use_color(true)
         , case_sensitive(true)
+        , file_offset_format(k_hex)
     {
     }
 
-    FILE * file;                         // The input file
-    search_string_format string_format;  // ASCII, Hex, or Binary
-    uint8_t * search_pattern;            // The pattern to search for
-    uint64_t search_pattern_length;      // Search pattern length (bytes)
-    bool use_color;                      // Enables color printing
-    bool case_sensitive;                 // Enables case sensitive search
+    FILE * file;               // The input file
+    uint8_t * pattern;         // The pattern to search for
+    uint64_t pattern_length;   // Search pattern length (bytes)
+    format pattern_format;     // Search pattern format ASCII, Hex, or Binary
+    bool use_color;            // Enables color printing
+    bool case_sensitive;       // Enables case sensitive search
+    format file_offset_format; // Format for printing file offsets
 };
 
 void print_hex(const configuration & config,
@@ -312,6 +315,17 @@ print_usage(char ** argv)
                     << "escape codes." << std::endl;
     std::cout << i2 << "This is the default." << std::endl;
     std::cout << std::endl;
+    std::cout << std::endl;
+    std::cout << i1 << "-o <dec|hex>" << std::endl;
+    std::cout << i1 << "--offset <dec|hex>" << std::endl;
+    std::cout << i2 << "Controls the format for printing file offsets.";
+    std::cout << std::endl;
+    std::cout << i3 << "  dec:  Prints file offsets in decimal format"
+              << std::endl;
+    std::cout << i3 << "  hex:  Prints file offsets in hexadecimal format"
+              << std::endl;
+    std::cout << i2 << "The default is hexadecimal." << std::endl;
+    std::cout << std::endl;
     std::cout << i1 << "-i" << std::endl;
     std::cout << i1 << "--ignore-case" << std::endl;
     std::cout << i2 << "Enable case-insensitive search." << std::endl;
@@ -342,7 +356,7 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
 {
     int index = 1;
     char * file_path = NULL;
-    char * search_pattern = NULL;
+    char * pattern = NULL;
 
     while (index < argc)
     {
@@ -361,20 +375,20 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
             option = argv[index];
             if (0 == strcmp(option, "ascii"))
             {
-                dst_conf->string_format = k_ascii;
+                dst_conf->pattern_format = k_ascii;
             }
             else if (0 == strncmp(option, "hex", 3))
             {
-                dst_conf->string_format = k_hex;
+                dst_conf->pattern_format = k_hex;
             }
             else if (0 == strncmp(option, "bin", 3))
             {
-                dst_conf->string_format = k_bin;
+                dst_conf->pattern_format = k_bin;
             }
             else
             {
                 std::cerr << "error: " << option
-                          << " is not a valid string_format" << std::endl;
+                          << " is not a valid pattern_format" << std::endl;
                 return k_status_error;
             }
         }
@@ -405,6 +419,25 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
                 }
             }
         }
+        else if (0 == strcmp(option, "-o") ||
+                 0 == strcmp(option, "--offset"))
+        {
+            dst_conf->file_offset_format = k_hex;
+            if (index + 1 < argc)
+            {
+                char * offset_format = argv[index + 1];
+                if (0 == strncmp(offset_format, "dec", 3))
+                {
+                    dst_conf->file_offset_format = k_dec;
+                    index++;
+                }
+                else if (0 == strncmp(offset_format, "hex", 3))
+                {
+                    dst_conf->file_offset_format = k_dec;
+                    index++;
+                }
+            }
+        }
         else if (0 == strcmp(option, "-i") ||
                  0 == strcmp(option, "--ignore-case"))
         {
@@ -415,16 +448,16 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
             std::cerr << "error: Unknown option - " << option << std::endl;
             return k_status_error;
         }
-        else if (search_pattern == NULL)
+        else if (pattern == NULL)
         {
             // We assume the following command line format:
-            //   bfind [options] search_pattern [file]
-            search_pattern = option;
+            //   bfind [options] pattern [file]
+            pattern = option;
         }
         else if (file_path == NULL)
         {
             // We assume the following command line format:
-            //   bfind [options] search_pattern file
+            //   bfind [options] pattern file
             file_path = option;
         }
         else
@@ -436,25 +469,25 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
         index++;
     }
 
-    if (search_pattern == NULL)
+    if (pattern == NULL)
     {
         std::cerr << "error: No search string specified" << std::endl;
         return k_status_error;
     }
     else
     {
-        if (k_ascii == dst_conf->string_format)
+        if (k_ascii == dst_conf->pattern_format)
         {
-            uint64_t length = strlen(search_pattern);
-            dst_conf->search_pattern = (uint8_t*) calloc(length+1, 1);
-            memcpy(dst_conf->search_pattern, search_pattern, length);
-            dst_conf->search_pattern_length = length;
+            uint64_t length = strlen(pattern);
+            dst_conf->pattern = (uint8_t*) calloc(length+1, 1);
+            memcpy(dst_conf->pattern, pattern, length);
+            dst_conf->pattern_length = length;
 
             if (dst_conf->case_sensitive == false)
             {
                 // We use lower case for the search string and for the file
                 // buffer in the search() function.
-                uint8_t * buffer = dst_conf->search_pattern;
+                uint8_t * buffer = dst_conf->pattern;
                 for (uint64_t i = 0; i < length; i++)
                 {
                     buffer[i] = tolower(buffer[i]);
@@ -462,9 +495,9 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
             }
 
         }
-        else if (k_hex == dst_conf->string_format)
+        else if (k_hex == dst_conf->pattern_format)
         {
-            uint64_t length = strlen(search_pattern);
+            uint64_t length = strlen(pattern);
             if (length & 1)
             {
                 std::cerr << "error: Hexadecimal search string length should "
@@ -472,16 +505,16 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
                 return k_status_error;
             }
 
-            dst_conf->search_pattern = (uint8_t*) malloc (length/2);
-            dst_conf->search_pattern_length = length/2;
+            dst_conf->pattern = (uint8_t*) malloc (length/2);
+            dst_conf->pattern_length = length/2;
 
             uint8_t msb = 0;
             uint8_t lsb = 0;
             uint64_t o = 0;
             for (uint64_t i = 0; i < length; i+=2, o++)
             {
-                msb = search_pattern[i+0];
-                lsb = search_pattern[i+1];
+                msb = pattern[i+0];
+                lsb = pattern[i+1];
 
                 if (!is_hex_character(msb) || !is_hex_character(lsb))
                 {
@@ -490,13 +523,13 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
                     return k_status_error;
                 }
 
-                dst_conf->search_pattern[o] = (nibble2byte(msb) << 4) |
-                                               nibble2byte(lsb);
+                dst_conf->pattern[o] = (nibble2byte(msb) << 4) |
+                                        nibble2byte(lsb);
             }
         }
-        else if (k_bin == dst_conf->string_format)
+        else if (k_bin == dst_conf->pattern_format)
         {
-            uint32_t length = strlen(search_pattern);
+            uint32_t length = strlen(pattern);
             if (length % 8)
             {
                 std::cerr << "error: Binary search string length should "
@@ -504,8 +537,8 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
                 return k_status_error;
             }
 
-            dst_conf->search_pattern = (uint8_t*) calloc(length/8, 1);
-            dst_conf->search_pattern_length = length/8;
+            dst_conf->pattern = (uint8_t*) calloc(length/8, 1);
+            dst_conf->pattern_length = length/8;
 
             uint64_t o = 0;
             for (uint64_t i = 0; i < length; i+=8, o++)
@@ -514,7 +547,7 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
                 for (uint64_t j = 0; j < 8; j++)
                 {
                     dst_value <<= 1;
-                    uint8_t bit_char = search_pattern[i + j];
+                    uint8_t bit_char = pattern[i + j];
                     if ('1' == bit_char)
                     {
                         dst_value |= 1;
@@ -526,12 +559,12 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
                         return k_status_error;
                     }
                 }
-                dst_conf->search_pattern[o] = dst_value;
+                dst_conf->pattern[o] = dst_value;
             }
         }
     }
 
-    if (dst_conf->string_format != k_ascii &&
+    if (dst_conf->pattern_format != k_ascii &&
         dst_conf->case_sensitive == false)
     {
         std::cerr << "error: Case can only be ignored when searching "
@@ -561,8 +594,8 @@ status_code search(const configuration & config)
 {
     status_code status = k_status_ok;
     const uint64_t k_buffer_size = 4096;
-    uint8_t * search_pattern = config.search_pattern;
-    uint64_t pattern_length = config.search_pattern_length;
+    uint8_t * pattern = config.pattern;
+    uint64_t pattern_length = config.pattern_length;
     uint64_t buffer_bytes = k_buffer_size + pattern_length;
     uint8_t * buffer = (uint8_t*) malloc(buffer_bytes);
     uint64_t buffer_pos = 0;    // current read position
@@ -620,7 +653,7 @@ status_code search(const configuration & config)
             uint64_t pattern_pos = 0;
             for (; pattern_pos < pattern_length; pattern_pos++)
             {
-                if (buffer_ptr[pattern_pos] != search_pattern[pattern_pos])
+                if (buffer_ptr[pattern_pos] != pattern[pattern_pos])
                 {
                     match = false;
                     break;
@@ -630,7 +663,14 @@ status_code search(const configuration & config)
             if (match)
             {
                 uint64_t match_pos = file_pos + (uint64_t) buffer_pos;
-                printf("match @ 0x%08lX  ", match_pos);
+                if (config.file_offset_format == k_hex)
+                {
+                    printf("match @ 0x%08lX  ", match_pos);
+                }
+                else
+                {
+                    printf("match @ %08ld  ", match_pos);
+                }
                 print_match(config, match_pos, file_size, pattern_length);
                 printf("\n");
                 match_count++;
@@ -686,7 +726,7 @@ main (int argc, char * argv [])
 
     status = search(config);
 
-    free(config.search_pattern);
+    free(config.pattern);
     fclose(config.file);
 
     exit:
