@@ -18,6 +18,13 @@ locations = {
         "/Users/nilsa/Documents",
         "/Users/nils/Music/Logic"
     ],
+    "nilsa@le-imaque": [
+        "/Users/nilsa/Documents",
+        "/Users/nilsa/Downloads",
+        "/Users/nilsa/Movies",
+        "/Users/nilsa/Music",
+        "/Users/nilsa/Projects"
+    ],
     "softis@softis": [
         "/Users/softis/Movies/hemmavideo",
         "/Users/softis/Documents",
