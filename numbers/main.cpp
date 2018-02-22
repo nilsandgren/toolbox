@@ -11,7 +11,8 @@
 // If there is no prefix, decimal input is assumed.
 uint64_t readInput(const char * input)
 {
-    if (strlen(input) < 1)
+    size_t input_length = strlen(input);
+    if (input_length < 1)
     {
         fprintf(stderr, "Malformed input\n");
         return 0;
@@ -33,6 +34,12 @@ uint64_t readInput(const char * input)
         case 'h':
             printf("  input: hex\n");
             return strtoull(input + 1, NULL, 16);
+        case '0':
+            if (input_length > 2 && input[1] == 'x')
+            {
+                printf("  input: hex\n");
+                return strtoull(input + 2, NULL, 16);
+            }
         default:
             printf("  input: dec\n");
             return strtoull(input, NULL, 10);
@@ -95,7 +102,7 @@ printOutput(uint64_t value)
     if (value <= 0xff &&
         isprint(int(value)))
     {
-        printf("  asc: %c\n", int(value));
+        printf("  asc: '%c'\n", int(value));
     }
     printf("\n");
     printTime(value);
@@ -117,6 +124,7 @@ printUsage(char * prog)
     fprintf(stderr, "    o: octal\n");
     fprintf(stderr, "    d: decimal\n");
     fprintf(stderr, "    h: hexadecimal\n");
+    fprintf(stderr, "   0x: hexadecimal\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "  Examples\n");
     fprintf(stderr, "         Read binary input:\n");
@@ -124,6 +132,7 @@ printUsage(char * prog)
     fprintf(stderr, "\n");
     fprintf(stderr, "         Read hexadecimal input:\n");
     fprintf(stderr, "         %s h09fa37\n", basename(prog));
+    fprintf(stderr, "         %s 0x20\n", basename(prog));
     fprintf(stderr, "\n");
     fprintf(stderr, "         Without prefix, decimal format is assumed:\n");
     fprintf(stderr, "         %s 157\n", basename(prog));
