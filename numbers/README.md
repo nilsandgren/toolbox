@@ -16,6 +16,7 @@ When run without arguments, `numbers` will print the following help:
         o: octal
         d: decimal
         h: hexadecimal
+       0x: hexadecimal
 
       Examples
              Read binary input:
@@ -23,9 +24,11 @@ When run without arguments, `numbers` will print the following help:
 
              Read hexadecimal input:
              numbers h09fa37
+             numbers 0x20
 
              Without prefix, decimal format is assumed:
              numbers 157
+
 
 When given a number, `numbers` displays the data in the following forms:
 
@@ -34,6 +37,7 @@ When given a number, `numbers` displays the data in the following forms:
   * Decimal
   * Hexadecimal
   * Time (GMT and local)
+  * ASCII character (if printable)
 
 
 An example of reading a binary string:
@@ -46,6 +50,7 @@ An example of reading a binary string:
       oct: 56
       dec: 46
       hex: 2e
+      asc: '.'
 
       gmt time: 1970-01-01 00:00:46
       loc time: 1970-01-01 01:00:46
