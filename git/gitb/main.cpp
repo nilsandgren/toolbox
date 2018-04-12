@@ -276,8 +276,11 @@ main(int argc, char * argv[])
         selected_branch = app.get_user_input();
     }
 
-    std::string command = "git checkout " + selected_branch;
-    system(command.c_str());
+    if (selected_branch.length())
+    {
+        std::string command = "git checkout " + selected_branch;
+        system(command.c_str());
+    }
 
     return 0;
 }
