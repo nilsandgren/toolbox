@@ -170,6 +170,7 @@ std::string
 application::get_user_input()
 {
     int field_num = 0;
+    mvwprintw(inner_window, field_num, 0, ">");
     while (int user_input = wgetch(main_window))
     {
         if (user_input == 'q')
@@ -182,6 +183,7 @@ application::get_user_input()
             return std::string(field_buffer(current_field(form), 0));
         }
 
+        mvwprintw(inner_window, field_num, 0, " ");
         switch (user_input)
         {
             case KEY_DOWN:
@@ -200,6 +202,8 @@ application::get_user_input()
                 set_current_field(form, fields[field_num]);
                 break;
         }
+        mvwprintw(inner_window, field_num, 0, ">");
+        wrefresh(inner_window);
     }
     return "";
 }
