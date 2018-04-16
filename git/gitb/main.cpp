@@ -79,7 +79,7 @@ class application
     private:
         void free_forms();
         void free_windows();
-        int  get_longest_length(std::vector<std::string> & strings);
+        static int get_longest_length(std::vector<std::string> & strings);
 
     private:
         int num_fields;
@@ -96,8 +96,8 @@ class application
 application::application()
     : num_fields(0)
     , num_lines(16)
-    , form(nullptr)
     , fields(nullptr)
+    , form(nullptr)
     , main_window(nullptr)
     , inner_window(nullptr)
 {
