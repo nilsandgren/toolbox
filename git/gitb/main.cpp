@@ -6,7 +6,7 @@
 //  
 //  ┌─────────────────────────────┐
 //  │ bug-314-account-cleanup     │
-//  │ bug-461-remove-all-entries  │
+//  │>bug-461-remove-all-entries  │
 //  │ master                      │
 //  │ update-all-user-credentials │
 //  │                             │
@@ -30,30 +30,21 @@
 #include <vector>
 
 
-typedef uint8_t  U08;
-typedef uint16_t U16;
-typedef int16_t  S16;
-typedef uint32_t U32;
-typedef int32_t  S32;
-
-
 // -- shell command interaction -------------------------------------------
 
 // Get git branches in current working directory as a vector of strings
 void
 get_git_branches(std::vector<std::string> & git_branches)
 {
-    FILE *fp;
-    char line[1035];
-
     const char * command = "git branch";
-    fp = popen(command, "r");
+    FILE * fp = popen(command, "r");
     if (fp == NULL)
     {
         std::cerr << "Failed to run :" << command << std::endl;
         return;
     }
 
+    char line[1035];
     while (fgets(line, sizeof(line)-1, fp) != NULL)
     {
         // trim first two characters and newline
@@ -141,10 +132,7 @@ application::add_text_fields(std::vector<std::string> & labels)
         row = i % num_lines;
         FIELD * field = new_field(1, longest_line, row, col, 0, 0);
         set_new_page(field, row == 0);
-
         field_opts_on(field, O_VISIBLE);
-        field_opts_off(field, O_EDIT);
-        field_opts_on(field, O_ACTIVE);
         set_field_buffer(field, 0, labels[i].c_str());
 
         fields[i] = field;
@@ -174,31 +162,23 @@ application::get_user_input()
     while (int user_input = wgetch(main_window))
     {
         if (user_input == 'q')
-        {
             break;
-        }
 
         if (user_input == '\n')
-        {
             return std::string(field_buffer(current_field(form), 0));
-        }
 
         mvwprintw(inner_window, field_num, 0, " ");
         switch (user_input)
         {
             case KEY_DOWN:
                 if (field_num < num_fields - 1)
-                {
                     field_num++;
-                }
                 set_current_field(form, fields[field_num]);
                 break;
 
             case KEY_UP:
                 if (field_num >= 1)
-                {
                     field_num--;
-                }
                 set_current_field(form, fields[field_num]);
                 break;
         }
@@ -218,9 +198,7 @@ application::free_forms()
         unpost_form(form);
         free_form(form);
         for (int i = 0; i < num_fields; i++)
-        {
             free_field(fields[i]);
-        }
         free(fields);
         fields = 0;
         num_fields = 0;
@@ -235,11 +213,13 @@ application::free_windows()
     if (main_window)
     {
         delwin(main_window);
+        main_window = nullptr;
     }
 
     if (inner_window)
     {
         delwin(inner_window);
+        inner_window = nullptr;
     }
 }
 
@@ -250,12 +230,8 @@ application::get_longest_length(std::vector<std::string> & strings)
 {
     int longest = 0;
     for (const auto & string : strings)
-    {
         if (string.length() > longest)
-        {
             longest = string.length();
-        }
-    }
     return longest;
 }
 
@@ -268,9 +244,7 @@ main(int argc, char * argv[])
     std::vector<std::string> branches;
     get_git_branches(branches);
     if (branches.empty())
-    {
         return 1;
-    }
 
     std::string selected_branch;
     // add a scope so ncurses does not eat the git output
