@@ -120,7 +120,7 @@ Configuration gOptions;
 
 // Read /proc/net/dev into a buffer
 static int64_t
-readProcNetFile(char * netFileContent)
+readProcNetFile(char * buffer, size_t bufferSize)
 {
     FILE * netFile = fopen("/proc/net/dev", "r");
     int netFileSize = 0;
@@ -129,7 +129,7 @@ readProcNetFile(char * netFileContent)
         std::cerr << "Could not open /proc/net/dev" << std::endl;
         return 0;
     }
-    netFileSize = fread(netFileContent, 1, 10000, netFile);
+    netFileSize = fread(buffer, 1, bufferSize, netFile);
     fclose(netFile);
     return netFileSize;
 }
@@ -140,9 +140,10 @@ static int64_t
 pollBytes(const std::string & interfaceName,
           Direction direction)
 {
-    char netFileContent[10000];
-    memset(netFileContent, 0, 10000);
-    if (!readProcNetFile(netFileContent))
+    const size_t kNetFileBufferSize = 10000;
+    char netFileContent[kNetFileBufferSize];
+    memset(netFileContent, 0, kNetFileBufferSize);
+    if (!readProcNetFile(netFileContent, kNetFileBufferSize))
     {
         return 0;
     }
