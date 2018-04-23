@@ -48,6 +48,7 @@ enum BandwidthUnit
 };
 
 const int32_t kRunForever = -1;
+const int32_t kDefaultMaxInterfaces = 4;
 
 // Represents a network interface
 class Interface
@@ -95,6 +96,7 @@ class Configuration
             , mTitleInterval(20)
             , mBandwidthUnit(kMegaBits)
             , mIterationLimit(kRunForever)
+            , mListAllInterfaces(false)
         {
         }
 
@@ -109,6 +111,9 @@ class Configuration
 
         // Run at most X iterations
         int32_t mIterationLimit;
+
+        // List all interfaces
+        bool mListAllInterfaces;
 };
 
 Configuration gOptions;
@@ -197,9 +202,13 @@ printInterfaceTitles(const std::vector<Interface*> interfaces)
 
 // Use getifaddrs to get interface names
 static void
-autoSetupInterfaces(std::vector<Interface*> & interfaces)
+autoSetupInterfaces(std::vector<Interface*> & interfaces,
+                    bool listAllInterfaces)
 {
     struct ifaddrs *addrs,*tmp;
+
+    int numInterfaces = 0;
+    int numSkippedInterfaces = 0;
 
     getifaddrs(&addrs);
     tmp = addrs;
@@ -208,15 +217,25 @@ autoSetupInterfaces(std::vector<Interface*> & interfaces)
     {
         if (tmp->ifa_addr && tmp->ifa_addr->sa_family == AF_PACKET)
         {
-            Interface * interface = Interface::create(tmp->ifa_name);
-            if (interface)
+            if (listAllInterfaces || numInterfaces < kDefaultMaxInterfaces)
             {
+                Interface * interface = Interface::create(tmp->ifa_name);
                 interfaces.push_back(interface);
+                numInterfaces++;
+            }
+            else
+            {
+                numSkippedInterfaces++;
             }
         }
         tmp = tmp->ifa_next;
     }
     freeifaddrs(addrs);
+    if (numSkippedInterfaces)
+    {
+        std::cerr << "Skipped " << numSkippedInterfaces << " interfaces. "
+                  << "Run with -a to list all." << std::endl;
+    }
 }
 
 static void
@@ -265,6 +284,12 @@ printHelp(char * argv[])
     std::cerr << s3 << "  k: kbit/sec" << std::endl;
     std::cerr << s3 << "  b: bit/sec" << std::endl;
     std::cerr << std::endl;
+    std::cerr << s2 << "-a, --all" << std::endl;
+    std::cerr << s3 << "list all interface." << std::endl;
+    std::cerr << s3 << "by default " << name << " will only list the first "
+                    << kDefaultMaxInterfaces << " interfaces " << std::endl;
+    std::cerr << s3 << "when run without a list of interface names." << std::endl;
+    std::cerr << std::endl;
     std::cerr << s1 << "EXAMPLES" << std::endl;
     std::cerr << s2 << "Display eth0 traffic with two seconds interval.";
     std::cerr << std::endl;
@@ -286,7 +311,7 @@ setup(std::vector<Interface*> & interfaces,
       int argc, char * argv[])
 {
     std::vector<Interface*> allInterfaces;
-    autoSetupInterfaces(allInterfaces);
+    autoSetupInterfaces(allInterfaces, true);
 
     for (int i = 1; i < argc; i++)
     {
@@ -340,6 +365,11 @@ setup(std::vector<Interface*> & interfaces,
             i++;
             gOptions.mIterationLimit = atof(argv[i]);
         }
+        if (strcmp(argv[i], "-a") == 0 ||
+            strcmp(argv[i], "--all") == 0)
+        {
+            gOptions.mListAllInterfaces = true;
+        }
         else
         {
             // If not, then it might be an interface name
@@ -364,9 +394,14 @@ setup(std::vector<Interface*> & interfaces,
             // If not, skip it
         }
     }
-    if (!interfaces.size())
+    if (interfaces.empty())
     {
-        autoSetupInterfaces(interfaces);
+        autoSetupInterfaces(interfaces, gOptions.mListAllInterfaces);
+    }
+
+    for (auto & interface : allInterfaces)
+    {
+        delete interface;
     }
 }
 
@@ -396,20 +431,19 @@ main(int argc, char * argv[])
 
         usleep(1000000 * gOptions.mPollInterval);
         std::cout << "| ";
-        auto i = interfaces.begin();
-        for ( ; i != interfaces.end(); ++i)
+        for (const auto & interface : interfaces)
         {
             std::cout << " ";
-            (*i)->update();
-            (*i)->print();
+            interface->update();
+            interface->print();
             std::cout << " |";
         }
         std::cout << std::endl;
     }
 
-    for (int i = 0; i < interfaces.size(); i++)
+    for (auto & interface : interfaces)
     {
-        delete interfaces[i];
+        delete interface;
     }
     return 0;
 }

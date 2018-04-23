@@ -8,6 +8,7 @@ machines.
 ## Usage
 `./nw -h` gives the following output:
 
+
     NAME
        nw - Network interface monitor
 
@@ -41,6 +42,11 @@ machines.
                k: kbit/sec
                b: bit/sec
 
+       -a, --all
+             list all interface.
+             by default nw will only list the first 4 interfaces
+             when run without a list of interface names.
+
     EXAMPLES
        Display eth0 traffic with two seconds interval.
              nw -i 2 eth0
@@ -50,6 +56,8 @@ machines.
 
     AUTHOR
        Written by Nils Andgren, 2013.
+
+
 
 ## Example with output
 Monitor the interfaces eth0 and lo. Use kbits/sec as the bandwidth
