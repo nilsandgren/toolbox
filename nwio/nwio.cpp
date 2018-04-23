@@ -97,9 +97,17 @@ class Configuration
             , mIterationLimit(kRunForever)
         {
         }
+
+        // How often to update interface statistics
         double mPollInterval;
+
+        // Print interface title every X times
         int32_t mTitleInterval;
+
+        // The unit used for printing the bandwidth
         BandwidthUnit mBandwidthUnit;
+
+        // Run at most X iterations
         int32_t mIterationLimit;
 };
 
