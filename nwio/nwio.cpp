@@ -141,6 +141,7 @@ pollBytes(const std::string & interfaceName,
           Direction direction)
 {
     char netFileContent[10000];
+    memset(netFileContent, 0, 10000);
     if (!readProcNetFile(netFileContent))
     {
         return 0;
