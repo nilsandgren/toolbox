@@ -17,6 +17,7 @@
 //  root@orbit:~# ./nw eths0 eths1 ethm0
 //  -----------------------------------------------------------------------------
 //  |  eths0                  | eths1                  | ethm0                  |
+//  |        rx         tx    |       rx         tx    |       rx         tx    |
 //  -----------------------------------------------------------------------------
 //  |      0.01       0.00    |     0.00       0.00    |     0.00       0.00    |
 //  |      0.00       0.00    |     0.00       0.00    |     0.00       0.00    |
@@ -179,22 +180,20 @@ printInterfaceTitles(const std::vector<Interface*> interfaces)
     const int kTotalWidth = interfaces.size() * (COLUMNS + 3) + 2;
     std::cout << std::string(kTotalWidth, '-') << std::endl;
 
-    auto i = interfaces.begin();
     std::cout << "| ";
-    for ( ; i != interfaces.end(); ++i)
+    for (const auto & interface : interfaces)
     {
         std::cout << " ";
-        (*i)->printTitle();
+        interface->printTitle();
         std::cout << " |";
     }
     std::cout << std::endl;
 
-    i = interfaces.begin();
     std::cout << "| ";
-    for ( ; i != interfaces.end(); ++i)
+    for (const auto & interface : interfaces)
     {
         std::cout << " ";
-        (*i)->printDirectionTitle();
+        interface->printDirectionTitle();
         std::cout << " |";
     }
     std::cout << std::endl;
@@ -376,10 +375,9 @@ setup(std::vector<Interface*> & interfaces,
         {
             // If not, then it might be an interface name
             bool isInterface = false;
-            auto iter = allInterfaces.begin();
-            for ( ; iter != allInterfaces.end(); iter++)
+            for (const auto & interface : allInterfaces)
             {
-                if ((*iter)->getName() == argv[i])
+                if (interface->getName() == argv[i])
                 {
                     isInterface = true;
                     break;
