@@ -241,6 +241,17 @@ application::get_longest_length(std::vector<std::string> & strings)
 int
 main(int argc, char * argv[])
 {
+    if (argc == 2 &&
+        (std::string("-h") == argv[1] ||
+         std::string("--help") == argv[1]))
+    {
+        std::cout << std::endl;
+        std::cout << " gitb - ncurses branch switcher" << std::endl;
+        std::cout << " © 2018 Nils Andgren" << std::endl;
+        std::cout << std::endl;
+        exit(0);
+    }
+
     std::vector<std::string> branches;
     get_git_branches(branches);
     if (branches.empty())
