@@ -63,7 +63,7 @@ get_git_branches()
         return git_branches;
     }
 
-    char line[1035];
+    char line[1024];
     while (fgets(line, sizeof(line)-1, fp) != NULL)
     {
         // trim first two characters and newline
