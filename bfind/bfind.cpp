@@ -18,26 +18,8 @@
 #define max(a, b) ((a) < (b) ? (b) : (a))
 
 // color escape sequences
-#define COLOR_FG_BLACK      "\033[30m"
 #define COLOR_FG_RED        "\033[31m"
-#define COLOR_FG_GREEN      "\033[32m"
-#define COLOR_FG_YELLOW     "\033[33m"
-#define COLOR_FG_BLUE       "\033[34m"
-#define COLOR_FG_MAGENTA    "\033[35m"
-#define COLOR_FG_CYAN       "\033[36m"
-#define COLOR_FG_WHITE      "\033[37m"
-
-#define COLOR_BG_BLACK      "\033[40m"
-#define COLOR_BG_RED        "\033[41m"
-#define COLOR_BG_GREEN      "\033[42m"
-#define COLOR_BG_YELLOW     "\033[43m"
-#define COLOR_BG_BLUE       "\033[44m"
-#define COLOR_BG_MAGENTA    "\033[45m"
-#define COLOR_BG_CYAN       "\033[46m"
-#define COLOR_BG_WHITE      "\033[47m"
-
 #define COLOR_RESET         "\033[0m"
-#define CLEAR_SCREEN        "\033[2J"
 
 enum status_code
 {
@@ -76,6 +58,23 @@ class configuration
     format file_offset_format; // Format for printing file offsets
 };
 
+void
+print_02x(const uint8_t * buffer,
+          uint64_t & position,
+          const uint64_t & stop)
+{
+    for (; position < stop; position++)
+        printf("%02x ", buffer[position]);
+}
+
+void
+set_color(const configuration & config, const char * sequence)
+{
+    if (config.use_color)
+        printf("%s", sequence);
+}
+
+// Print hexadecimal version of a matching line
 void print_hex(const configuration & config,
                uint64_t position,
                uint64_t start,
@@ -85,32 +84,32 @@ void print_hex(const configuration & config,
 {
     uint64_t i = 0;
     // bytes prior to match
-    for (i = 0; i < position - start; i++)
-    {
-        printf("%02x ", buffer[i]);
-    }
+    print_02x(buffer, i, position - start);
 
     // the match
-    if(config.use_color)
-    {
-        printf(COLOR_FG_RED);
-    }
-    for (; i < match_length + (position - start); i++)
-    {
-        printf("%02x ", buffer[i]);
-    }
-    if(config.use_color)
-    {
-        printf(COLOR_RESET);
-    }
+    set_color(config, COLOR_FG_RED);
+    print_02x(buffer, i, match_length + (position - start));
+    set_color(config, COLOR_RESET);
 
     // bytes after match
-    for (; i < length; i++)
+    print_02x(buffer, i, length);
+}
+
+void
+print_chars(const uint8_t * buffer,
+            uint64_t & position,
+            const uint64_t & stop)
+{
+    for (; position < stop; position++)
     {
-        printf("%02x ", buffer[i]);
+        if (isprint(buffer[position]))
+            printf("%c", buffer[position]);
+        else
+            printf(".");
     }
 }
 
+// Print decimal version of a matching line
 void print_ascii(const configuration & config,
                  uint64_t position,
                  uint64_t start,
@@ -122,51 +121,15 @@ void print_ascii(const configuration & config,
     uint64_t i = 0;
 
     // bytes prior to match
-    for (i = 0; i < position - start; i++)
-    {
-        if (isprint(buffer[i]))
-        {
-            printf("%c", buffer[i]);
-        }
-        else
-        {
-            printf(".");
-        }
-    }
+    print_chars(buffer, i, position - start);
 
     // the match
-    if(config.use_color)
-    {
-        printf(COLOR_FG_RED);
-    }
-    for (; i < match_length + (position - start); i++)
-    {
-        if (isprint(buffer[i]))
-        {
-            printf("%c", buffer[i]);
-        }
-        else
-        {
-            printf(".");
-        }
-    }
-    if(config.use_color)
-    {
-        printf(COLOR_RESET);
-    }
+    set_color(config, COLOR_FG_RED);
+    print_chars(buffer, i, match_length + (position - start));
+    set_color(config, COLOR_RESET);
 
     // bytes after match
-    for (; i < length; i++)
-    {
-        if (isprint(buffer[i]))
-        {
-            printf("%c", buffer[i]);
-        }
-        else
-        {
-            printf(".");
-        }
-    }
+    print_chars(buffer, i, length);
 
     for (i = 0; i < (uint64_t)trim; i++)
     {
@@ -195,25 +158,26 @@ print_match(const configuration & config,
     fseeko(config.file, start, SEEK_SET);
     size_t bytes_read = fread(buffer, 1, length, config.file);
     if (bytes_read != length)
-    {
         std::cerr << "error: could not read " << length
                   << " bytes @ " << start << std::endl;
-    }
+
+    if (config.file_offset_format == k_hex)
+        printf("match @ 0x%08lX  ", position);
+    else
+        printf("match @ %08ld  ", position);
 
     // hex in left column
     print_hex(config, position, start, length, match_length, buffer);
 
     for (i = 0; i < (uint64_t)trim; i++)
-    {
         printf("   ");
-    }
 
     printf(" | ");
 
     // ascii in right column
     print_ascii(config, position, start, length, match_length, trim, buffer);
 
-    printf(" |");
+    printf(" |\n");
     free(buffer);
 
     fseeko(config.file, position_backup, SEEK_SET);
@@ -224,13 +188,9 @@ is_hex_character(uint8_t c)
 {
     c = toupper(c);
     if (isalpha(c))
-    {
         return c <= 'F' && c >= 'A';
-    }
     else
-    {
         return c <= '9' && c >= '0';
-    }
 }
 
 uint8_t
@@ -240,116 +200,99 @@ nibble2byte(uint8_t c)
     c = toupper(c);
 
     if (isalpha(c))
-    {
         d = c - 'A' + 10; // 'A' should equal 10
-    }
     else
-    {
         d = c - '0';      // the value of the digit
-    }
+
     return d;
 }
 
 void
 print_usage_short(char ** argv)
 {
-    std::string name = basename(argv[0]);
-    std::cout << std::endl;
-    std::cout << "Usage:" << std::endl;
-    std::cout << "  Search: " << name << " [OPTIONS] <string> <file> "
-              << std::endl;
-    std::cout << "  Help: : " << name << " --help" << std::endl;
-    std::cout << std::endl;
+    std::string usage = R"xxx(
+Usage:
+  Search: bfind [OPTIONS] <string> <file> 
+  Help: : bfind --help
+    )xxx";
+	std::cerr << usage << std::endl;
 }
 
 void
 print_usage(char ** argv)
 {
-    // indentation
-    std::string i0 = "  ";
-    std::string i1 = "     ";
-    std::string i2 = "           ";
-    std::string i3 = "             ";
-    std::string name = basename(argv[0]);
+    std::string usage = R"xxx(
+  NAME
+     bfind - search binary files quickly
 
-    std::cout << std::endl;
-    std::cout << i0 << "NAME" << std::endl;
-    std::cout << i1 << name << " - search binary files quickly" << std::endl;
-    std::cout << std::endl;
-    std::cout << i0 << "SYNOPSIS" << std::endl;
-    std::cout << i1 << name << " [OPTIONS] <string> <file> " << std::endl;
-    std::cout << std::endl;
-    std::cout << i0 << "DESCRIPTION" << std::endl;
-    std::cout << i1 << "Search files for ASCII, hexadecimal, "
-                    << "or binary search strings." << std::endl;
-    std::cout << i1 << "The offset, and some neighboring data, of each match "
-                    << "is printed to stdout.";
-    std::cout << std::endl;
-    std::cout << i1 << "All search patterns must start at a byte boundary."
-                    << std::endl;
-    std::cout << std::endl;
-    std::cout << i1 << name << " returns 0 if at least one match is found, "
-              << "and 1 otherwise." << std::endl;
-    std::cout << std::endl;
-    std::cout << i1 << "-h" << std::endl;
-    std::cout << i1 << "--help" << std::endl;
-    std::cout << i2 << "Display this help." << std::endl;
-    std::cout << std::endl;
-    std::cout << i1 << "-f <ascii|hex|bin>" << std::endl;
-    std::cout << i1 << "--format <ascii|hex|bin>" << std::endl;
-    std::cout << i2 << "Specify the format of the search string." << std::endl;
-    std::cout << std::endl;
-    std::cout << i3 << "ascii:  ASCII text search string, e.g. hello"
-              << std::endl;
-    std::cout << i3 << "  hex:  Hexadecimal search string, e.g. 4d5601c0"
-              << std::endl;
-    std::cout << i3 << "  bin:  Binary search string, e.g. 0110111011110100"
-              << std::endl;
-    std::cout << std::endl;
-    std::cout << i2 << "The default format is ascii.";
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << i1 << "-c <yes|no>" << std::endl;
-    std::cout << i1 << "--color <yes|no>" << std::endl;
-    std::cout << i2 << "Print matching file content using ANSI color "
-                    << "escape codes." << std::endl;
-    std::cout << i2 << "This is the default." << std::endl;
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << i1 << "-o <dec|hex>" << std::endl;
-    std::cout << i1 << "--offset <dec|hex>" << std::endl;
-    std::cout << i2 << "Controls the format for printing file offsets.";
-    std::cout << std::endl;
-    std::cout << i3 << "  dec:  Prints file offsets in decimal format"
-              << std::endl;
-    std::cout << i3 << "  hex:  Prints file offsets in hexadecimal format"
-              << std::endl;
-    std::cout << i2 << "The default is hexadecimal." << std::endl;
-    std::cout << std::endl;
-    std::cout << i1 << "-i" << std::endl;
-    std::cout << i1 << "--ignore-case" << std::endl;
-    std::cout << i2 << "Enable case-insensitive search." << std::endl;
-    std::cout << i2 << "Only applicable to ASCII search strings." << std::endl;
-    std::cout << i2 << "Case-sensitive search is the default." << std::endl;
-    std::cout << std::endl;
-    std::cout << i0 << "EXAMPLES" << std::endl;
-    std::cout << i1 << "Find the ASCII string banana in file.bin.";
-    std::cout << std::endl;
-    std::cout << i2 << name << " banana file.bin" << std::endl;
-    std::cout << std::endl;
-    std::cout << i1 << "Find the hexadecimal string 0a134b "
-                    << "in file.bin." << std::endl;
-    std::cout << i2 << name << " -f hex 0a134b file.bin" << std::endl;
-    std::cout << std::endl;
-    std::cout << i1 << "Search for the binary string 0110100110011001 "
-                    << "in file.bin." << std::endl;
-    std::cout << i2 << name << " -f bin 0110100110011001 file.bin";
-    std::cout << std::endl;
-    std::cout << std::endl;
-    std::cout << i0 << "AUTHOR" << std::endl;
-    std::cout << i1 << "Written by Nils Andgren, 2014." << std::endl;
-    std::cout << std::endl;
+  SYNOPSIS
+     bfind [OPTIONS] <string> <file> 
+
+  DESCRIPTION
+     Search files for ASCII, hexadecimal, or binary search strings.
+     The offset, and some neighboring data, of each match is printed to stdout.
+     All search patterns must start at a byte boundary.
+
+     bfind returns 0 if at least one match is found, and 1 otherwise.
+
+     -h
+     --help
+           Display this help.
+
+     -f <ascii|hex|bin>
+     --format <ascii|hex|bin>
+           Specify the format of the search string.
+
+             ascii:  ASCII text search string, e.g. hello
+               hex:  Hexadecimal search string, e.g. 4d5601c0
+               bin:  Binary search string, e.g. 0110111011110100
+
+           The default format is ascii.
+
+     -c <yes|no>
+     --color <yes|no>
+           Print matching file content using ANSI color escape codes.
+           This is the default.
+
+
+     -o <dec|hex>
+     --offset <dec|hex>
+           Controls the format for printing file offsets.
+               dec:  Prints file offsets in decimal format
+               hex:  Prints file offsets in hexadecimal format
+           The default is hexadecimal.
+
+     -i
+     --ignore-case
+           Enable case-insensitive search.
+           Only applicable to ASCII search strings.
+           Case-sensitive search is the default.
+
+  EXAMPLES
+     Find the ASCII string banana in file.bin.
+           bfind banana file.bin
+
+     Find the hexadecimal string 0a134b in file.bin.
+           bfind -f hex 0a134b file.bin
+
+     Search for the binary string 0110100110011001 in file.bin.
+           bfind -f bin 0110100110011001 file.bin
+
+  AUTHOR
+     Written by Nils Andgren, 2014.
+    )xxx";
+    std::cerr << usage << std::endl;
 }
+
+void
+to_lower_case(uint8_t * buffer,
+              uint64_t position,
+              uint64_t stop)
+{
+    for (; position < stop; position++)
+        buffer[position] = tolower(buffer[position]);
+}
+
 
 status_code
 apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
@@ -374,17 +317,11 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
             index++;
             option = argv[index];
             if (0 == strcmp(option, "ascii"))
-            {
                 dst_conf->pattern_format = k_ascii;
-            }
             else if (0 == strncmp(option, "hex", 3))
-            {
                 dst_conf->pattern_format = k_hex;
-            }
             else if (0 == strncmp(option, "bin", 3))
-            {
                 dst_conf->pattern_format = k_bin;
-            }
             else
             {
                 std::cerr << "error: " << option
@@ -488,12 +425,8 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
                 // We use lower case for the search string and for the file
                 // buffer in the search() function.
                 uint8_t * buffer = dst_conf->pattern;
-                for (uint64_t i = 0; i < length; i++)
-                {
-                    buffer[i] = tolower(buffer[i]);
-                }
+                to_lower_case(buffer, 0, length);
             }
-
         }
         else if (k_hex == dst_conf->pattern_format)
         {
@@ -590,9 +523,9 @@ apply_command_line_options(configuration * dst_conf, int argc, char * argv [])
     return k_status_ok;
 }
 
+// Search the file while printing matching file content
 status_code search(const configuration & config)
 {
-    status_code status = k_status_ok;
     const uint64_t k_buffer_size = 4096;
     uint8_t * pattern = config.pattern;
     uint64_t pattern_length = config.pattern_length;
@@ -611,15 +544,13 @@ status_code search(const configuration & config)
     uint64_t file_pos = 0;
     uint64_t file_size = 0;
 
-    FILE * search_file = config.file;
-
-    fseeko(search_file, 0, SEEK_END);
-    file_size = ftello(search_file);
-    rewind(search_file);
+    fseeko(config.file, 0, SEEK_END);
+    file_size = ftello(config.file);
+    rewind(config.file);
 
     bytes_read = fread(buffer + buffer_offset,
                        1, k_buffer_size + pattern_length,
-                       search_file);
+                       config.file);
 
     if (bytes_read < k_buffer_size)
     {
@@ -639,10 +570,7 @@ status_code search(const configuration & config)
 
         if (config.case_sensitive == false)
         {
-            for (uint64_t i = 0; i < bytes_read; i++)
-            {
-                buffer[i] = tolower(buffer[i]);
-            }
+            to_lower_case(buffer, 0, bytes_read);
         }
 
         // search through the buffer up to last possible complete match
@@ -663,16 +591,7 @@ status_code search(const configuration & config)
             if (match)
             {
                 uint64_t match_pos = file_pos + (uint64_t) buffer_pos;
-                if (config.file_offset_format == k_hex)
-                {
-                    printf("match @ 0x%08lX  ", match_pos);
-                }
-                else
-                {
-                    printf("match @ %08ld  ", match_pos);
-                }
                 print_match(config, match_pos, file_size, pattern_length);
-                printf("\n");
                 match_count++;
             }
         }
@@ -687,7 +606,7 @@ status_code search(const configuration & config)
         file_pos += bytes_read;
         bytes_read = fread(buffer + buffer_offset, 
                            1, k_buffer_size, 
-                           search_file);
+                           config.file);
     } 
     while (!end_of_data);
 
@@ -697,15 +616,14 @@ status_code search(const configuration & config)
     if (!match_count)
     {
         std::cout << "No match found." << std::endl;
-        status = k_status_error;
+        return k_status_error;
     }
     else
     {
         std::string es = match_count > 1 ? "es" : "";
         std::cout << match_count << " match" << es << " found." << std::endl;
-        status = k_status_ok;
+        return k_status_ok;
     }
-    return status;
 }
 
 
