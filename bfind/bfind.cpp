@@ -39,23 +39,16 @@ class configuration
 {
     public:
     configuration()
-        : file(NULL)
-        , pattern(NULL)
-        , pattern_length(0)
-        , pattern_format(k_ascii)
-        , use_color(true)
-        , case_sensitive(true)
-        , file_offset_format(k_hex)
     {
     }
 
-    FILE * file;               // The input file
-    uint8_t * pattern;         // The pattern to search for
-    uint64_t pattern_length;   // Search pattern length (bytes)
-    format pattern_format;     // Search pattern format ASCII, Hex, or Binary
-    bool use_color;            // Enables color printing
-    bool case_sensitive;       // Enables case sensitive search
-    format file_offset_format; // Format for printing file offsets
+    FILE * file = nullptr;              // The input file
+    uint8_t * pattern = nullptr;        // The pattern to search for
+    uint64_t pattern_length = 0;        // Search pattern length (bytes)
+    format pattern_format = k_ascii;    // Search pattern format ASCII, Hex, or Binary
+    bool use_color = true;              // Enables color printing
+    bool case_sensitive = true;         // Enables case sensitive search
+    format file_offset_format = k_hex;  // Format for printing file offsets
 };
 
 void
@@ -132,9 +125,7 @@ void print_ascii(const configuration & config,
     print_chars(buffer, i, length);
 
     for (i = 0; i < (uint64_t)trim; i++)
-    {
         printf(" ");
-    }
 }
 
 
@@ -564,14 +555,10 @@ status_code search(const configuration & config)
     do
     {
         if (bytes_read < k_buffer_size)
-        {
             end_of_data = true;
-        }
 
         if (config.case_sensitive == false)
-        {
             to_lower_case(buffer, 0, bytes_read);
-        }
 
         // search through the buffer up to last possible complete match
         for (buffer_pos = 0; buffer_pos <= bytes_read; buffer_pos++)
