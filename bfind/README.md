@@ -6,7 +6,7 @@ This is the output from bfind --help
        bfind - search binary files quickly
 
     SYNOPSIS
-       bfind [OPTIONS] <string> <file> 
+       bfind [OPTIONS] <string> <file>
 
     DESCRIPTION
        Search files for ASCII, hexadecimal, or binary search strings.
@@ -15,11 +15,12 @@ This is the output from bfind --help
 
        bfind returns 0 if at least one match is found, and 1 otherwise.
 
-       -h, --help
+       -h
+       --help
              Display this help.
 
-       -f ascii|hex|bin
-       --format ascii|hex|bin
+       -f <ascii|hex|bin>
+       --format <ascii|hex|bin>
              Specify the format of the search string.
 
                ascii:  ASCII text search string, e.g. hello
@@ -28,14 +29,24 @@ This is the output from bfind --help
 
              The default format is ascii.
 
-       -c yes|no
-       --color yes|no
+       -c <yes|no>
+       --color <yes|no>
              Print matching file content using ANSI color escape codes.
+             This is the default.
+
+
+       -o <dec|hex>
+       --offset <dec|hex>
+             Controls the format for printing file offsets.
+                 dec:  Prints file offsets in decimal format
+                 hex:  Prints file offsets in hexadecimal format
+             The default is hexadecimal.
 
        -i
        --ignore-case
              Enable case-insensitive search.
              Only applicable to ASCII search strings.
+             Case-sensitive search is the default.
 
     EXAMPLES
        Find the ASCII string banana in file.bin.
@@ -49,4 +60,3 @@ This is the output from bfind --help
 
     AUTHOR
        Written by Nils Andgren, 2014.
-
