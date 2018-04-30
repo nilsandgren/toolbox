@@ -22,7 +22,6 @@
 #include <assert.h>
 #include <stdint.h>
 #include <ncurses.h>
-#include <cursesf.h>
 #include <form.h>
 
 #include <iostream>
