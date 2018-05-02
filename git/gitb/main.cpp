@@ -34,6 +34,7 @@
 enum class git_command
 {
     k_checkout,
+    k_checkout_remote,
     k_delete,
     k_force_delete
 };
@@ -44,6 +45,7 @@ to_string(const git_command & command)
     switch(command)
     {
         case git_command::k_checkout: return "CHECKOUT";
+        case git_command::k_checkout_remote: return "CHECKOUT";
         case git_command::k_delete: return "DELETE";
         case git_command::k_force_delete: return "FORCE DELETE";
     }
@@ -51,14 +53,18 @@ to_string(const git_command & command)
 
 // Return git branches in current working directory as a vector of strings
 std::vector<std::string>
-get_git_branches()
+get_git_branches(const git_command & command)
 {
     std::vector<std::string> git_branches;
-    const char * command = "git branch";
-    FILE * fp = popen(command, "r");
+    std::string command_string = "git branch";
+    if (command == git_command::k_checkout_remote)
+    {
+        command_string += " -r";
+    }
+    FILE * fp = popen(command_string.c_str(), "r");
     if (fp == NULL)
     {
-        std::cerr << "Failed to run :" << command << std::endl;
+        std::cerr << "Failed to run :" << command_string << std::endl;
         return git_branches;
     }
 
@@ -79,7 +85,7 @@ get_command_string(const git_command & command,
                    const std::string & branch)
 {
     std::string command_string = "git ";
-    if (command == git_command::k_checkout)
+    if (command == git_command::k_checkout || command == git_command::k_checkout_remote)
         command_string += "checkout ";
     else if (command == git_command::k_delete)
         command_string += "branch -d ";
@@ -88,7 +94,13 @@ get_command_string(const git_command & command,
     else
         std::cout << "  Unknown git command: " << to_string(command);
 
-    command_string += branch;
+    std::string branch_copy = branch;
+    // trim origin/ part of remote branches
+    if (command == git_command::k_checkout_remote)
+        if (branch_copy.find("origin/") == 0)
+            branch_copy = branch_copy.substr(7);
+
+    command_string += branch_copy;
 
     return command_string;
 }
@@ -295,7 +307,7 @@ display_credits()
 void
 display_usage()
 {
-    std::cout << " usage: gitb [--help] [ --checkout | --delete | --force-delete]";
+    std::cout << " usage: gitb [--help] [ --checkout | --checkout-remote | --delete | --force-delete]";
     std::cout << std::endl;
 }
 
@@ -310,6 +322,10 @@ display_help()
    --checkout
          Select branch to check out
          This is the default action
+
+   -r
+   --checkout-remote
+         Select remote branch to check out
 
    -d
    --delete
@@ -338,6 +354,10 @@ main(int argc, char * argv[])
         if (std::string("-c") == argument || std::string("--checkout") == argument)
         {
             command = git_command::k_checkout;
+        }
+        else if (std::string("-r") == argument || std::string("--checkout-remote") == argument)
+        {
+            command = git_command::k_checkout_remote;
         }
         else if (std::string("-d") == argument || std::string("--delete") == argument)
         {
@@ -371,7 +391,7 @@ main(int argc, char * argv[])
         exit(1);
     }
 
-    auto branches = get_git_branches();
+    auto branches = get_git_branches(command);
     if (branches.empty())
         return 1;
 
