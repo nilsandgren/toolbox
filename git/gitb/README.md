@@ -1,7 +1,8 @@
 # gitb
 
-`gitb` is an ncurses tool for switching between, or deleting,
-your local git branches using the arrow keys on your keyboard.
+`gitb` is an ncurses tool for checking out local or remote git
+branches using the arrow keys on your keyboard. I also allows
+you to delete local branches.
 
 Example output:
 
@@ -27,6 +28,10 @@ Description of command line arguments:
     --checkout
           Select branch to check out
           This is the default action
+
+    -r
+    --checkout-remote
+          Select remote branch to check out
 
     -d
     --delete
