@@ -215,11 +215,8 @@ application::get_user_input(const git_command & command)
     int offset = (m_width - title.length()) / 2;
     mvwprintw(m_main_window, 0, offset, title.c_str());
 
-    set_field_fore(m_fields[field_num], A_BOLD);
-    mvwprintw(m_inner_window, field_num % m_num_lines, 0, ">");
-
-    wrefresh(m_inner_window);
-    while (int user_input = wgetch(m_main_window))
+    int user_input = 0;
+    do
     {
         if (user_input == 'q')
             break;
@@ -268,6 +265,8 @@ application::get_user_input(const git_command & command)
 
         wrefresh(m_inner_window);
     }
+    while (user_input = wgetch(m_main_window));
+
     return "";
 }
 
