@@ -41,6 +41,10 @@ Description of command line arguments:
     --force-delete
           Select branch to force delete
 
+    arrow up/down : previous/next branch
+     page up/down : previous/next page of branches
+            enter : perform git command
+                q : exit
 
 `gitb` is relying on that the output from "git branch" is
 having two leading characters before the branch name.

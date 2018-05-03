@@ -239,6 +239,22 @@ application::get_user_input(const git_command & command)
                     field_num--;
                 set_current_field(m_form, m_fields[field_num]);
                 break;
+
+            case KEY_NPAGE:
+                if (field_num < m_num_fields - m_num_lines)
+                    field_num += m_num_lines;
+                else
+                    field_num = m_num_fields - 1;
+                set_current_field(m_form, m_fields[field_num]);
+                break;
+
+            case KEY_PPAGE:
+                if (field_num >= m_num_lines)
+                    field_num -= m_num_lines;
+                else
+                    field_num = 0;
+                set_current_field(m_form, m_fields[field_num]);
+                break;
         }
         mvwprintw(m_inner_window, field_num % m_num_lines, 0, ">");
         wrefresh(m_inner_window);
@@ -335,9 +351,10 @@ display_help()
    --force-delete
          Select branch to force delete
 
-  up/down arrow : move in branch list
-          enter : perform git command
-              q : exit
+   up/down arrow : previous/next branch
+    page up/down : previous/next page of branches
+           enter : perform git command
+               q : exit
     )x";
 
     std::cout << help;
