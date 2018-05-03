@@ -198,7 +198,7 @@ application::add_text_fields(std::vector<std::string> & labels)
     m_form = new_form(m_fields);
 
     set_form_win(m_form, m_main_window);
-    m_inner_window = derwin(m_main_window, m_num_lines + 2, longest_line + 2, 1, 1);
+    m_inner_window = derwin(m_main_window, m_num_lines + 1, longest_line + 2, 2, 1);
     set_form_sub(m_form, m_inner_window);
     post_form(m_form);
 }
