@@ -215,7 +215,9 @@ application::get_user_input(const git_command & command)
     int offset = (m_width - title.length()) / 2;
     mvwprintw(m_main_window, 0, offset, title.c_str());
 
+    set_field_fore(m_fields[field_num], A_BOLD);
     mvwprintw(m_inner_window, field_num % m_num_lines, 0, ">");
+
     wrefresh(m_inner_window);
     while (int user_input = wgetch(m_main_window))
     {
@@ -225,7 +227,10 @@ application::get_user_input(const git_command & command)
         if (user_input == '\n')
             return std::string(field_buffer(current_field(m_form), 0));
 
+        // Clear previous selected field
+        set_field_fore(m_fields[field_num], A_NORMAL);
         mvwprintw(m_inner_window, field_num % m_num_lines, 0, " ");
+
         switch (user_input)
         {
             case KEY_DOWN:
@@ -256,7 +261,11 @@ application::get_user_input(const git_command & command)
                 set_current_field(m_form, m_fields[field_num]);
                 break;
         }
+
+        // Mark current field
+        set_field_fore(m_fields[field_num], A_BOLD);
         mvwprintw(m_inner_window, field_num % m_num_lines, 0, ">");
+
         wrefresh(m_inner_window);
     }
     return "";
