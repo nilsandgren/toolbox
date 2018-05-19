@@ -107,7 +107,7 @@ get_command_string(const git_command & command,
     std::string branch_copy = branch;
     // trim origin/ part of remote branches
     if (command == git_command::k_checkout_remote)
-        if (branch_copy.find("origin/") == 0)
+        if (branch_copy.compare(0, 7, "origin/") == 0)
             branch_copy = branch_copy.substr(7);
 
     command_string += branch_copy;
