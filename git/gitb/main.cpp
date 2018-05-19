@@ -39,7 +39,7 @@ enum class git_command
     k_force_delete
 };
 
-const char *
+std::string
 to_string(const git_command & command)
 {
     switch(command)
@@ -51,10 +51,14 @@ to_string(const git_command & command)
     }
 }
 
-// Return git branches in current working directory as a vector of strings
+// Return git branches as a vector of strings. If possible, current_branch
+// will be set to the index of the currently checked out branch, otherwise it
+// will be set to -1.
 std::vector<std::string>
-get_git_branches(const git_command & command)
+get_git_branches(const git_command & command,
+                 int & current_branch)
 {
+    current_branch = -1;
     std::vector<std::string> git_branches;
     std::string command_string = "git branch";
     if (command == git_command::k_checkout_remote)
@@ -69,11 +73,17 @@ get_git_branches(const git_command & command)
     }
 
     char line[1024];
+    size_t index = 0;
     while (fgets(line, sizeof(line)-1, fp) != NULL)
     {
-        // trim first two characters and newline
         std::string tmp = line;
+        if (tmp[0] == '*')
+        {
+            current_branch = index;
+        }
+        // trim first two characters and newline
         git_branches.push_back(std::string(tmp.begin() + 2, tmp.end() - 1));
+        index++;
     }
     pclose(fp);
     return git_branches;
@@ -115,7 +125,8 @@ class application
         ~application();
 
         void add_text_fields(std::vector<std::string> & labels);
-        std::string get_user_input(const git_command & command);
+        std::string get_user_input(const git_command & command,
+                                   int current_branch);
 
     private:
         void free_forms();
@@ -198,7 +209,10 @@ application::add_text_fields(std::vector<std::string> & labels)
     m_form = new_form(m_fields);
 
     set_form_win(m_form, m_main_window);
-    m_inner_window = derwin(m_main_window, m_num_lines + 1, longest_line + 2, 2, 1);
+    m_inner_window = derwin(m_main_window,
+                            m_num_lines + 1,
+                            longest_line + 2,
+                            2, 1);
     set_form_sub(m_form, m_inner_window);
     post_form(m_form);
 }
@@ -206,14 +220,20 @@ application::add_text_fields(std::vector<std::string> & labels)
 
 // Let the user select an item among the text fields
 std::string
-application::get_user_input(const git_command & command)
+application::get_user_input(const git_command & command,
+                            int current_branch_index)
 {
     int field_num = 0;
+    if (current_branch_index >= 0)
+        field_num = current_branch_index;
 
     // Make a title with the git command and center it
-    std::string title = std::string(" Select branch to ") + to_string(command) + " ";
-    int offset = (m_width - title.length()) / 2;
-    mvwprintw(m_main_window, 0, offset, title.c_str());
+    std::string title = " Select branch to ";
+    title += to_string(command) + " ";
+    int title_start = (m_width - title.length()) / 2;
+    mvwprintw(m_main_window, 0, title_start, title.c_str());
+
+    set_current_field(m_form, m_fields[field_num]);
 
     int user_input = 0;
     do
@@ -416,7 +436,8 @@ main(int argc, char * argv[])
         exit(1);
     }
 
-    auto branches = get_git_branches(command);
+    int current_branch_index = 0;
+    auto branches = get_git_branches(command, current_branch_index);
     if (branches.empty())
         return 1;
 
@@ -425,7 +446,7 @@ main(int argc, char * argv[])
     {
         application app;
         app.add_text_fields(branches);
-        selected_branch = app.get_user_input(command);
+        selected_branch = app.get_user_input(command, current_branch_index);
     }
 
     if (selected_branch.length())
