@@ -1,10 +1,6 @@
 // gitb - ncurses git util
 // © 2018 Nils Andgren
 
-// #include <stdio.h>
-// #include <stdlib.h>
-// #include <assert.h>
-// #include <stdint.h>
 
 #include <iostream>
 #include <string>
@@ -40,9 +36,12 @@ get_git_branches(const git_command & command,
     {
         std::string tmp = line;
         if (tmp[0] == '*')
-        {
             current_branch = index;
-        }
+
+        // skip detached HEAD
+        if (tmp.find(" detached at ") != std::string::npos)
+            continue;
+
         // trim first two characters and newline
         git_branches.push_back(std::string(tmp.begin() + 2, tmp.end() - 1));
         index++;
@@ -50,6 +49,7 @@ get_git_branches(const git_command & command,
     pclose(fp);
     return git_branches;
 }
+
 
 // Return git command string based on the command and the branch name
 std::string
