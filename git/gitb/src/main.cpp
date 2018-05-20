@@ -29,6 +29,46 @@
 #include "git.h"
 
 
+void display_credits();
+void display_usage();
+void display_help();
+void parse_args(int argc, char * argv[], git_command & command);
+
+
+int
+main(int argc, char * argv[])
+{
+    // Parse the command line and determine the git command
+    git_command command;
+    parse_args(argc, argv, command);
+
+    // Get the available git branches
+    int current_branch_index = 0;
+    auto branches = get_git_branches(command, current_branch_index);
+    if (branches.empty())
+        return 1;
+
+    std::string selected_branch;
+    // Add a scope so ncurses does not eat the git output
+    {
+        application app;
+        app.add_text_fields(branches);
+        // Let the user select a branch
+        selected_branch = app.get_user_input(command, current_branch_index);
+    }
+
+    if (selected_branch.length())
+    {
+        // Get the complete command to execute
+        std::string command_string = get_command_string(command, selected_branch);
+        // Execute command on selected branch
+        system(command_string.c_str());
+    }
+
+    return 0;
+}
+
+
 void
 display_credits()
 {
@@ -37,12 +77,14 @@ display_credits()
     std::cout << std::endl;
 }
 
+
 void
 display_usage()
 {
     std::cout << " usage: gitb [--help] [ --checkout | --checkout-remote | --delete | --force-delete]";
     std::cout << std::endl;
 }
+
 
 void
 display_help()
@@ -77,10 +119,10 @@ display_help()
     std::cout << help;
 }
 
-int
-main(int argc, char * argv[])
+
+void parse_args(int argc, char * argv[], git_command & command)
 {
-    git_command command = git_command::k_checkout;
+    command = git_command::k_checkout;
 
     if (argc == 2)
     {
@@ -131,24 +173,4 @@ main(int argc, char * argv[])
         exit(1);
     }
 
-    int current_branch_index = 0;
-    auto branches = get_git_branches(command, current_branch_index);
-    if (branches.empty())
-        return 1;
-
-    std::string selected_branch;
-    // add a scope so ncurses does not eat the git output
-    {
-        application app;
-        app.add_text_fields(branches);
-        selected_branch = app.get_user_input(command, current_branch_index);
-    }
-
-    if (selected_branch.length())
-    {
-        std::string command_string = get_command_string(command, selected_branch);
-        system(command_string.c_str());
-    }
-
-    return 0;
 }
