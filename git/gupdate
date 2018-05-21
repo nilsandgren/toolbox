@@ -8,4 +8,4 @@ BRANCH=`git rev-parse --abbrev-ref HEAD`
 
 git fetch
 git rebase origin/master
-git push -f origin $BRANCH
+git push --force-with-lease origin $BRANCH
