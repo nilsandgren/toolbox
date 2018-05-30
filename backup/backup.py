@@ -16,7 +16,7 @@ locations = {
     ],
     "nilsa@macbook-pro": [
         "/Users/nilsa/Documents",
-        "/Users/nils/Music/Logic"
+        "/Users/nilsa/Music/Logic"
     ],
     "nilsa@le-imaque": [
         "/Users/nilsa/Documents",
