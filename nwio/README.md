@@ -52,7 +52,7 @@ machines.
              nw -i 2 eth0
 
        Display traffic for all interfaces in kbit/sec.
-             nw -u k
+             nw -a -u k
 
     AUTHOR
        Written by Nils Andgren, 2013.

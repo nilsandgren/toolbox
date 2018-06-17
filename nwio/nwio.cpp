@@ -14,7 +14,7 @@
 //
 // A tool for printing network I/O information based on /proc/net/dev.
 //
-//  root@orbit:~# ./nw eths0 eths1 ethm0
+//  user@host:~# ./nw eths0 eths1 ethm0
 //  -----------------------------------------------------------------------------
 //  |  eths0                  | eths1                  | ethm0                  |
 //  |        rx         tx    |       rx         tx    |       rx         tx    |
@@ -298,7 +298,7 @@ printHelp(char * argv[])
     std::cerr << std::endl;
     std::cerr << s2 << "Display traffic for all interfaces in kbit/sec.";
     std::cerr << std::endl;
-    std::cerr << s3 << name << " -u k" << std::endl;
+    std::cerr << s3 << name << " -a -u k" << std::endl;
     std::cerr << std::endl;
     std::cerr << s1 << "AUTHOR" << std::endl;
     std::cerr << s2 << "Written by Nils Andgren, 2013." << std::endl;
