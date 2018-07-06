@@ -17,7 +17,11 @@ class application
         application();
         ~application();
 
+        // Add text fields for the user to select from
         void add_text_fields(std::vector<std::string> & labels);
+
+        // Let the user select a text field and return the text
+        // An empty string is returned if the user quits the form
         std::string get_user_input(const git_command & command,
                                    int current_branch);
 
