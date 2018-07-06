@@ -66,6 +66,7 @@ unit and print the output every two seconds:
     user@host# nw -u k -i 2 eths0 lo
     ----------------------------------------------------
     |  eth0                   | lo                     |
+    |  kbit/s                 | kbit/s                 |
     |         rx         tx   |        rx         tx   |
     ----------------------------------------------------
     |    1298.21       0.00   |      0.00       0.00   |

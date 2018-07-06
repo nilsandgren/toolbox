@@ -17,6 +17,7 @@
 //  user@host:~# ./nw eths0 eths1 ethm0
 //  -----------------------------------------------------------------------------
 //  |  eths0                  | eths1                  | ethm0                  |
+//  |  Mbit/s                 | Mbit/s                 | Mbit/s                 |
 //  |        rx         tx    |       rx         tx    |       rx         tx    |
 //  -----------------------------------------------------------------------------
 //  |      0.01       0.00    |     0.00       0.00    |     0.00       0.00    |
@@ -48,6 +49,17 @@ enum BandwidthUnit
     kGigaBits   // 1000000000
 };
 
+std::string toString(BandwidthUnit unit)
+{
+    switch(unit)
+    {
+        case kBits: return "bit/s";
+        case kKiloBits: return "kbit/s";
+        case kMegaBits: return "Mbit/s";
+        case kGigaBits: return "Gbit/s";
+    }
+}
+
 const int32_t kRunForever = -1;
 const int32_t kDefaultMaxInterfaces = 4;
 
@@ -61,11 +73,17 @@ class Interface
         // Update interface statistics
         void update();
 
+        // Print text in a fixed-width column
+        void printColumn(const std::string& text) const;
+
         // Print title line for this interface
         void printTitle() const;
 
         // Print traffic direction title line for this interface
         void printDirectionTitle() const;
+
+        // Print the bandwidth unit
+        void printBandwidthUnit() const;
 
         // Print current interface statistics
         void print() const;
@@ -185,6 +203,15 @@ printInterfaceTitles(const std::vector<Interface*> interfaces)
     {
         std::cout << " ";
         interface->printTitle();
+        std::cout << " |";
+    }
+    std::cout << std::endl;
+
+    std::cout << "| ";
+    for (const auto & interface : interfaces)
+    {
+        std::cout << " ";
+        interface->printBandwidthUnit();
         std::cout << " |";
     }
     std::cout << std::endl;
@@ -496,26 +523,32 @@ void Interface::update()
     mLastUpdateTime = now;
 }
 
-void Interface::printTitle() const
+void Interface::printColumn(const std::string& text) const
 {
-    // print title that has a fixed width
+    // print text in a fixed-width column
     char line[COLUMNS + 1];
     memset(line, 0x20, COLUMNS);
     line[COLUMNS] = '\0';
-    snprintf(line, COLUMNS, "%s", mName.c_str());
+    snprintf(line, COLUMNS, "%s", text.c_str());
+    // overwrite null termination
     line[strlen(line)] = ' ';
     fprintf(stdout, "%s", line);
 }
 
+void Interface::printTitle() const
+{
+    // print title that has a fixed width
+    printColumn(mName);
+}
+
+void Interface::printBandwidthUnit() const
+{
+    printColumn(toString(gOptions.mBandwidthUnit));
+}
+
 void Interface::printDirectionTitle() const
 {
-    // print rx/tx title that has a fixed width
-    char line[COLUMNS + 1];
-    memset(line, 0x20, COLUMNS);
-    line[COLUMNS] = '\0';
-    snprintf(line, COLUMNS, "       rx         tx");
-    line[strlen(line)] = ' ';
-    fprintf(stdout, "%s", line);
+    printColumn("       rx         tx");
 }
 
 void Interface::print() const
