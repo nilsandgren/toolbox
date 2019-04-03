@@ -6,6 +6,8 @@
 #include <time.h>
 #include <ctype.h>
 
+#include "roman.h"
+
 // Read input text string and convert to a number.
 // The prefixes b, o, d, and h are used to set the input format.
 // If there is no prefix, decimal input is assumed.
@@ -40,11 +42,15 @@ uint64_t readInput(const char * input)
                 printf("  input: hex\n");
                 return strtoull(input + 2, NULL, 16);
             }
+        case 'r':
+            printf("  input: rom\n");
+            return readRoman(input + 1);
         default:
             printf("  input: dec\n");
             return strtoull(input, NULL, 10);
     }
 }
+
 
 
 // Binary print of a value
@@ -99,6 +105,10 @@ printOutput(uint64_t value)
     printf("  oct: %lo\n", value);
     printf("  dec: %lu\n", value);
     printf("  hex: %lx\n", value);
+    if (value <= 10000)
+    {
+        printRoman(value);
+    }
     if (value <= 0xff &&
         isprint(int(value)))
     {
@@ -125,6 +135,7 @@ printUsage(char * prog)
     fprintf(stderr, "    d: decimal\n");
     fprintf(stderr, "    h: hexadecimal\n");
     fprintf(stderr, "   0x: hexadecimal\n");
+    fprintf(stderr, "    r: Roman numerals\n");
     fprintf(stderr, "\n");
     fprintf(stderr, "  Examples\n");
     fprintf(stderr, "         Read binary input:\n");
@@ -133,6 +144,9 @@ printUsage(char * prog)
     fprintf(stderr, "         Read hexadecimal input:\n");
     fprintf(stderr, "         %s h09fa37\n", basename(prog));
     fprintf(stderr, "         %s 0x20\n", basename(prog));
+    fprintf(stderr, "\n");
+    fprintf(stderr, "         Read Roman numeral input:\n");
+    fprintf(stderr, "         %s rMLXVI\n", basename(prog));
     fprintf(stderr, "\n");
     fprintf(stderr, "         Without prefix, decimal format is assumed:\n");
     fprintf(stderr, "         %s 157\n", basename(prog));

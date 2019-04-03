@@ -17,6 +17,7 @@ When run without arguments, `numbers` will print the following help:
         d: decimal
         h: hexadecimal
        0x: hexadecimal
+        r: Roman numerals
 
       Examples
              Read binary input:
@@ -25,6 +26,9 @@ When run without arguments, `numbers` will print the following help:
              Read hexadecimal input:
              numbers h09fa37
              numbers 0x20
+
+             Read Roman numeral input:
+             numbers rMLXVI
 
              Without prefix, decimal format is assumed:
              numbers 157
@@ -38,6 +42,7 @@ When given a number, `numbers` displays the data in the following forms:
   * Hexadecimal
   * Time (GMT and local)
   * ASCII character (if printable)
+  * Roman numerals (if value <= 10000)
 
 
 An example of reading a binary string:
