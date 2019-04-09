@@ -1,0 +1,66 @@
+#!/bin/bash
+
+# vf - find files in current dir and open matches in vim
+#
+# Usage:
+#   vf <pattern>
+#
+# Usage:
+# 
+#   Case insensitive file search for banana:
+#     vf banana
+# 
+# When the list of matches opens, use gF to jump to the file:line match
+# under the cursor. Use :q to get back to the list of matching lines.
+# 
+# !! SUPER TIP !!
+# Add the following to your .vimrc to open a match in a new tab with ,o
+# nnoremap ,o <C-w>gF
+
+# set -x
+
+MATCHFILE="$(mktemp)"
+
+# search function that checks resulting file size
+function search
+{
+  find . -iname "*$1*" > "$MATCHFILE"
+  filesize=$(stat -c%s "$MATCHFILE")
+  if [ $filesize -ne 0 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+# search function that checks return value from find
+# function search
+# {
+#   find . -iname "*$1*" > "$MATCHFILE"
+#   if [ $? -eq 0 ]; then
+#     return 0
+#   else
+#     return 1
+#   fi
+# }
+
+function remove_match_file
+{
+  rm "$MATCHFILE"
+  if [ $? -ne 0 ]; then
+    echo "Failed to remove $MATCHFILE"
+  fi
+}
+
+echo "Searching..."
+search "$@"
+result=$?
+
+if [ $result -eq 0 ]; then
+  echo "Done"
+  vim "$MATCHFILE"
+else
+  echo "No matching files found"
+fi
+
+remove_match_file
