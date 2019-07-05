@@ -20,9 +20,11 @@ class application
         // Add text fields for the user to select from
         void add_text_fields(std::vector<std::string> & labels);
 
-        // Let the user select a text field and return the text
-        // An empty string is returned if the user quits the form
-        std::string get_user_input(const git_command & command,
+        // Let the user select a text field and return the text.
+        // An empty string is returned if the user quits the form.
+        // If the command is git_command::k_interactive, the command can be
+        // changed by the user while interacting with the form.
+        std::string get_user_input(git_command & command,
                                    int current_branch);
 
     private:

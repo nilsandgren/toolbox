@@ -22,6 +22,11 @@ Use the up and down arrows to move in the list of branches.
 Press enter to check out the currently selected branch, or
 press q to abort.
 
+If the command line argument -i (short for --interactive)
+is provided, checkout, delete, and force delete can be
+performed on the currently selected branch by pressing
+c, d, or D respectively.
+
 Description of command line arguments:
 
     -c
@@ -40,6 +45,12 @@ Description of command line arguments:
     -D
     --force-delete
           Select branch to force delete
+
+    -i
+    --interactive
+          Select (c)checkout, (d)elete, or force (D)elete
+          when navigating the branches.
+          Only for local branches.
 
     arrow up/down : previous/next branch
      page up/down : previous/next page of branches

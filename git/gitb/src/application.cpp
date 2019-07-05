@@ -79,7 +79,7 @@ application::add_text_fields(std::vector<std::string> & labels)
 
 // Let the user select an item among the text fields
 std::string
-application::get_user_input(const git_command & command,
+application::get_user_input(git_command & command,
                             int current_branch_index)
 {
     int field_num = 0;
@@ -100,8 +100,41 @@ application::get_user_input(const git_command & command,
         if (user_input == 'q')
             break;
 
+        // If command is k_interactive, see if user pressed c, d or D
+        // (checkout, delete, force delete). Change the command
+        // accordingly and act as if user pressed enter.
+        if (command == git_command::k_interactive)
+        {
+            switch (user_input)
+            {
+                case '\n':
+                case 'c':
+                {
+                    command = git_command::k_checkout;
+                    user_input = '\n';
+                    break;
+                }
+                case 'd':
+                {
+                    command = git_command::k_delete;
+                    user_input = '\n';
+                    break;
+                }
+                case 'D':
+                {
+                    command = git_command::k_force_delete;
+                    user_input = '\n';
+                    break;
+                }
+                default: break;
+            }
+        }
+
         if (user_input == '\n')
-            return std::string(field_buffer(current_field(m_form), 0));
+        {
+            std::string tmp(field_buffer(current_field(m_form), 0));
+            return tmp.substr(0, tmp.find(" "));
+        }
 
         // Clear previous selected field
         set_field_fore(m_fields[field_num], A_NORMAL);
@@ -207,5 +240,6 @@ application::to_string(const git_command & command)
         case git_command::k_checkout_remote: return "CHECKOUT";
         case git_command::k_delete: return "DELETE";
         case git_command::k_force_delete: return "FORCE DELETE";
+        case git_command::k_interactive: return "INTERACT WITH (c|d|D)";
     }
 }

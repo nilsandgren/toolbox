@@ -57,6 +57,16 @@ main(int argc, char * argv[])
         selected_branch = app.get_user_input(command, current_branch_index);
     }
 
+    if (selected_branch == "master")
+    {
+        if (command == git_command::k_delete ||
+            command == git_command::k_force_delete)
+        {
+            std::cout << "Will not delete master for you" << std::endl;
+            return 0;
+        }
+    }
+
     if (selected_branch.length())
     {
         // Get the complete command to execute
@@ -81,7 +91,7 @@ display_credits()
 void
 display_usage()
 {
-    std::cout << " usage: gitb [--help] [ --checkout | --checkout-remote | --delete | --force-delete]";
+    std::cout << " usage: gitb [--help] [ --checkout | --checkout-remote | --delete | --force-delete | --interactive ]";
     std::cout << std::endl;
 }
 
@@ -109,6 +119,11 @@ display_help()
    -D
    --force-delete
          Select branch to force delete
+
+   -i
+   --interactive
+         Select (c)checkout, (d)elete, or force (D)elete
+         when navigating the branches. Only for local branches.
 
    up/down arrow : previous/next branch
     page up/down : previous/next page of branches
@@ -146,6 +161,11 @@ void parse_args(int argc, char * argv[], git_command & command)
                  std::string("--force-delete") == argument)
         {
             command = git_command::k_force_delete;
+        }
+        else if (std::string("-i") == argument ||
+                 std::string("--interactive") == argument)
+        {
+            command = git_command::k_interactive;
         }
         else
         {

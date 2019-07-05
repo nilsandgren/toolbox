@@ -14,7 +14,8 @@ enum class git_command
     k_checkout,
     k_checkout_remote,
     k_delete,
-    k_force_delete
+    k_force_delete,
+    k_interactive
 };
 
 
