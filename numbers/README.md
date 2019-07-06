@@ -55,6 +55,7 @@ An example of reading a binary string:
       oct: 56
       dec: 46
       hex: 2e
+      rom: XLVI
       asc: '.'
 
       gmt time: 1970-01-01 00:00:46
