@@ -11,6 +11,24 @@
 # gupdate  Nils Andgren  821a15f  1 year, 2 months ago  [gupdate] Using --force-with-lease
 
 
+_print_path() {
+    # Print a path string with some formatting
+    # $1 the path, $2 file to print to
+    color_file="\e[97m"
+    color_dir="\e[94m"
+    reset="\e[0m"
+
+    if [[ -d $1 ]]; then
+        suffix="/"
+        color=${color_dir}
+    else
+        suffix=""
+        color=${color_file}
+    fi
+    echo -e -n "${color}${1}${suffix}${reset}" >> $2
+}
+
+
 _gitls() {
     TRACKED_FILES="$(mktemp)"
     UNTRACKED_FILES="$(mktemp)"
@@ -31,19 +49,16 @@ _gitls() {
                 echo "Untracked files:" >> $UNTRACKED_FILES
             fi
 
-            echo "  ${path}" >> $UNTRACKED_FILES
+            echo -n "  " >> $UNTRACKED_FILES
+            _print_path "${path}" $UNTRACKED_FILES
+            echo >> $UNTRACKED_FILES
             shift
             continue
         fi
 
-		# Append / to directories
-        if [[ -d $path ]]; then
-            suffix="/"
-        else
-            suffix=""
-        fi
+        _print_path "${path}" $TRACKED_FILES
+        echo -n "|" >> $TRACKED_FILES
 
-        echo -e -n "${path}${suffix}|" >> $TRACKED_FILES
         echo $git_output >> $TRACKED_FILES
 
         shift
