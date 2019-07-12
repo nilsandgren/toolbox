@@ -31,7 +31,9 @@ _print_path() {
 
 _gitls() {
     TRACKED_FILES="$(mktemp)"
+    TRACKED_DIRS="$(mktemp)"
     UNTRACKED_FILES="$(mktemp)"
+    UNTRACKED_DIRS="$(mktemp)"
     no_untracked_files=1
 
     # Loop the provided paths
@@ -41,32 +43,46 @@ _gitls() {
         git_format="%an|%C(dim)%h%C(reset)|%cr|%Cgreen%<(50,trunc)%s%Creset"
         git_output=`git log -1 --pretty=format:"${git_format}" "${path}"`
 
-        # Skip files not under version control
+        # Files not under version control
         if [[ ${git_output} = "" ]]; then
-            if [ $no_untracked_files -eq 1 ]; then
-                no_untracked_files=0
-                echo "" >> $UNTRACKED_FILES
-                echo "Untracked files:" >> $UNTRACKED_FILES
+            no_untracked_files=0
+            if [[ -d $path ]]; then
+                output=$UNTRACKED_DIRS
+            else
+                output=$UNTRACKED_FILES
             fi
 
-            echo -n "  " >> $UNTRACKED_FILES
-            _print_path "${path}" $UNTRACKED_FILES
-            echo >> $UNTRACKED_FILES
+            echo -n "  " >> $output
+            _print_path "${path}" $output
+            echo >> $output
             shift
             continue
         fi
 
-        _print_path "${path}" $TRACKED_FILES
-        echo -n "|" >> $TRACKED_FILES
+        if [[ -d $path ]]; then
+            output=$TRACKED_DIRS
+        else
+            output=$TRACKED_FILES
+        fi
 
-        echo $git_output >> $TRACKED_FILES
+        _print_path "${path}" $output
+        echo -n "|" >> $output
+
+        echo $git_output >> $output
 
         shift
     done
 
-    cat $TRACKED_FILES | column -ts'|'
+    cat $TRACKED_DIRS $TRACKED_FILES | column -ts'|'
     rm "$TRACKED_FILES"
-    cat $UNTRACKED_FILES
+    rm "$TRACKED_DIRS"
+    if [ $no_untracked_files -eq 0 ]; then
+        echo ""
+        echo "Untracked files:"
+        cat $UNTRACKED_DIRS
+        cat $UNTRACKED_FILES
+    fi
+    rm "$UNTRACKED_DIRS"
     rm "$UNTRACKED_FILES"
 }
 
