@@ -36,7 +36,8 @@ locations = {
 # The list of known storages
 storages = [
     "/Volumes/Storbiten",
-    "/Volumes/MonoLiten"
+    "/Volumes/MonoLiten",
+    "/Volumes/Snyggo"
 ]
 
 
