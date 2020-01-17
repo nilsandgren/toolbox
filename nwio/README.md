@@ -42,6 +42,13 @@ machines.
                k: kbit/sec
                b: bit/sec
 
+       -g <x>
+             graph: set the maximum rate to <x> in current
+             unit and print rate with a number of bars
+
+             e.g. -g 100
+
+
        -a, --all
              list all interface.
              by default nw will only list the first 4 interfaces

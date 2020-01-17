@@ -116,6 +116,7 @@ class Configuration
             , mBandwidthUnit(kMegaBits)
             , mIterationLimit(kRunForever)
             , mListAllInterfaces(false)
+            , mGraphMax(0)
         {
         }
 
@@ -133,9 +134,10 @@ class Configuration
 
         // List all interfaces
         bool mListAllInterfaces;
-};
 
-Configuration gOptions;
+        // Max rate, in current unit, for graph mode
+        int64_t mGraphMax;
+} gOptions;
 
 // Read /proc/net/dev into a buffer
 static int64_t
@@ -312,6 +314,12 @@ printHelp(char * argv[])
     std::cerr << s3 << "  k: kbit/sec" << std::endl;
     std::cerr << s3 << "  b: bit/sec" << std::endl;
     std::cerr << std::endl;
+    std::cerr << s2 << "-g <x>" << std::endl;
+    std::cerr << s3 << "graph: set the maximum rate to <x> in current" << std::endl;
+    std::cerr << s3 << "unit and print rate with a number of bars" << std::endl;
+    std::cerr << std::endl;
+    std::cerr << s3 << "e.g. -g 100" << std::endl;
+    std::cerr << std::endl;
     std::cerr << s2 << "-a, --all" << std::endl;
     std::cerr << s3 << "list all interface." << std::endl;
     std::cerr << s3 << "by default " << name << " will only list the first "
@@ -392,6 +400,16 @@ setup(std::vector<Interface*> & interfaces,
         {
             i++;
             gOptions.mIterationLimit = atof(argv[i]);
+        }
+        // Graph mode (print bars) max level
+        else if (strcmp(argv[i], "-g") == 0 && i < argc-1)
+        {
+            i++;
+            int64_t value = atol(argv[i]);
+            if (value > 0)
+            {
+                gOptions.mGraphMax = value;
+            }
         }
         if (strcmp(argv[i], "-a") == 0 ||
             strcmp(argv[i], "--all") == 0)
@@ -565,11 +583,30 @@ void Interface::print() const
         case kKiloBits: denominator = 1000.0; break;
         case kBits: denominator = 1.0; break;
     }
-    snprintf(line, COLUMNS, "%9.2f  %9.2f",
-            mRXBitsPerSecond/denominator,
-            mTXBitsPerSecond/denominator);
-    line[strlen(line)] = ' ';
-    fprintf(stdout, "%s", line);
+
+    double rxRate = mRXBitsPerSecond/denominator;
+    double txRate = mTXBitsPerSecond/denominator;
+    if (gOptions.mGraphMax)
+    {
+        // Print a number of bars, signifying fraction of max rate
+        double rxFraction = std::min(rxRate/gOptions.mGraphMax, 1.0);
+        double txFraction = std::min(txRate/gOptions.mGraphMax, 1.0);
+        int maxBars = 10;
+        int rxBars = maxBars * rxFraction;
+        int txBars = maxBars * txFraction;
+        for (int i = 0; i < rxBars; i++) printf("|");
+        for (int i = 0; i < maxBars - rxBars; i++) printf(" ");
+        printf("  ");
+        for (int i = 0; i < txBars; i++) printf("|");
+        for (int i = 0; i < maxBars - txBars; i++) printf(" ");
+    }
+    else
+    {
+        // Print numerical value
+        snprintf(line, COLUMNS, "%9.2f  %9.2f", rxRate, txRate);
+        line[strlen(line)] = ' ';
+        fprintf(stdout, "%s", line);
+    }
 }
 
 std::string Interface::getName() const
