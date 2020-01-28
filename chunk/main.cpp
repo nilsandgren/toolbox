@@ -5,6 +5,7 @@
 int main(int argc, char * argv[])
 {
     FILE * input = NULL;
+    size_t file_size = 0;
 
     long long int bytes = 0;
     long long int offset = 0;
@@ -15,6 +16,7 @@ int main(int argc, char * argv[])
         fprintf(stderr, "it to stdout.\n\n");
         fprintf(stderr, "  Usage:    chunk size@offset filename\n");
         fprintf(stderr, "  Example:  chunk 1024@123456 file.dat > chunk.dat\n\n");
+        fprintf(stderr, "  If size is zero, the chunk extends to EOF.\n\n");
         return 1;
     }
 
@@ -24,6 +26,9 @@ int main(int argc, char * argv[])
         fprintf(stderr, "error: Could not open \"%s\"\n", argv[2]);
         return 1;
     }
+    fseek(input, 0L, SEEK_END);
+    file_size = ftell(input);
+
 
     // Split bytes@offset
     {
@@ -38,7 +43,12 @@ int main(int argc, char * argv[])
         }
         bytes = strtoull(bytes_string, NULL, 10);
         offset = strtoull(offset_string, NULL, 10);
-        if (bytes <= 0)
+        if (bytes == 0)
+        {
+            fprintf(stderr, "info: Reading to end of file\n");
+            bytes = file_size - offset;
+        }
+        if (bytes < 0)
         {
             fprintf(stderr, "error: Number of bytes is <= 0\n");
             goto error_exit;
@@ -55,10 +65,6 @@ int main(int argc, char * argv[])
         long long int bytes_to_read = bytes;
         const size_t buffer_size = 2048;
         unsigned char buffer[buffer_size];
-        size_t file_size = 0;
-
-        fseek(input, 0L, SEEK_END);
-        file_size = ftell(input);
 
         if (offset >= file_size)
         {
