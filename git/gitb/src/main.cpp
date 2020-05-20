@@ -52,15 +52,18 @@ main(int argc, char * argv[])
     // Add a scope so ncurses does not eat the git output
     {
         application app;
-        // Let the user interact
+        app.add_text_labels(branches, current_branch_index);
+
         while (true)
         {
-            app.add_text_fields(branches);
-            selected_branch = app.get_user_input(command, current_branch_index);
+            app.get_user_input(command);
             if (app.get_state() == application::k_quit)
                 return 0;
             if (app.get_state() == application::k_done)
+            {
+                selected_branch = app.get_selected_label();
                 break;
+            }
         }
     }
 

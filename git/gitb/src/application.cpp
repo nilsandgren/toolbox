@@ -48,13 +48,22 @@ application::filter_labels(std::vector<std::string>& dst,
 
 // Add text fields to the view
 void
-application::add_text_fields(std::vector<std::string> & labels)
+application::add_text_labels(std::vector<std::string> & labels,
+                             int selected_index)
+{
+    m_labels = labels;
+    m_field_index = selected_index;
+}
+
+void
+application::draw_main_window()
 {
     free_forms();
     free_windows();
 
+    // only include labels matching m_filter
     std::vector<std::string> filtered;
-    filter_labels(filtered, labels);
+    filter_labels(filtered, m_labels);
 
     m_num_fields = filtered.size();
     m_fields = (FIELD**) calloc(m_num_fields + 1, sizeof(FIELD *));
@@ -66,7 +75,7 @@ application::add_text_fields(std::vector<std::string> & labels)
 
     int row = 0;
     int col = 1;
-    int longest_line = std::max(50, get_longest_length(labels));
+    int longest_line = std::max(50, get_longest_length(m_labels));
     for (int i = 0; i < m_num_fields; i++, row++)
     {
         row = i % m_num_lines;
@@ -140,10 +149,13 @@ application::change_state(int user_input)
         if (user_input == '\n' ||
             user_input == KEY_UP ||
             user_input == KEY_DOWN ||
-            (user_input == KEY_BACKSPACE && m_filter.length() == 0))
+            (user_input == KEY_BACKSPACE &&
+             m_filter.length() == 0))
         m_state = k_navigating;
     }
-    else if (user_input == '/')
+    else if (user_input == '/' ||
+             (user_input == KEY_BACKSPACE &&
+              m_filter.length() != 0))
     {
         // Go into filter editing state
         m_state = k_filtering;
@@ -247,13 +259,17 @@ application::display_footer()
     mvwprintw(m_main_window, y, 4 + m_filter.length(), " ");
 }
 
-std::string
-application::get_user_input(git_command & command,
-                            int& current_branch_index)
+void
+application::get_user_input(git_command & command)
 {
+    // Very lazy. Recreate ncurses window from current state since filtering
+    // changes the list of labels displayed. Ideally only the list of FIELDs
+    // should be modified.
+    draw_main_window();
+
     int field_num = 0;
-    if (current_branch_index >= 0)
-        field_num = current_branch_index;
+    if (m_field_index >= 0)
+        field_num = m_field_index;
 
     display_header(command);
     display_footer();
@@ -269,7 +285,7 @@ application::get_user_input(git_command & command,
 
         if (m_state != prev_state)
         {
-            current_branch_index = 0;
+            m_field_index = 0;
             break;
         }
 
@@ -282,7 +298,8 @@ application::get_user_input(git_command & command,
             {
                 m_state = k_done;
                 std::string tmp(field_buffer(current_field(m_form), 0));
-                return tmp.substr(0, tmp.find(" "));
+                m_selected_label = tmp.substr(0, tmp.find(" "));
+                return;
             }
         }
 
@@ -299,7 +316,7 @@ application::get_user_input(git_command & command,
             update_filter(user_input);
             if (m_filter != prev_filter)
             {
-                current_branch_index = 0;
+                m_field_index = 0;
                 break;
             }
         }
@@ -311,9 +328,14 @@ application::get_user_input(git_command & command,
     }
     while (user_input = wgetch(m_main_window));
 
-    return "";
+    m_selected_label = "";
 }
 
+std::string
+application::get_selected_label() const
+{
+    return m_selected_label;
+}
 
 // Deallocate form and fields
 void

@@ -22,22 +22,25 @@ class application
         {
             k_navigating,  // moving about
             k_filtering,   // edit filter string
-            k_done,        // branch selected
+            k_done,        // label has been selected
             k_quit         // early exit
         };
         state get_state() const;
 
         // Add text fields for the user to select from
-        void add_text_fields(std::vector<std::string> & labels);
+        void add_text_labels(std::vector<std::string> & labels,
+                             int selected_index);
 
-        // Let the user select a text field and return the text.
-        // An empty string is returned if the user quits the form.
+        // Let the user interact with the window, updating the state.
         // If the command is git_command::k_interactive, the command can be
         // changed by the user while interacting with the form.
-        std::string get_user_input(git_command & command,
-                                   int& current_branch);
+        void get_user_input(git_command & command);
+
+        // Get text of the currently selected label, if any
+        std::string get_selected_label() const;
 
     private:
+        void draw_main_window();
         void free_forms();
         void free_windows();
         static int get_longest_length(std::vector<std::string> & strings);
@@ -55,6 +58,7 @@ class application
 
     private:
         int m_num_fields = 0;
+        int m_field_index = -1;
         int m_num_lines = 16;
 
         int m_width = 0;
@@ -62,6 +66,9 @@ class application
 
         state m_state = k_navigating;
         std::string m_filter = "";
+
+        std::vector<std::string> m_labels;
+        std::string m_selected_label;
 
         FIELD ** m_fields = nullptr;
         FORM * m_form = nullptr;
