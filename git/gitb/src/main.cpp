@@ -52,9 +52,16 @@ main(int argc, char * argv[])
     // Add a scope so ncurses does not eat the git output
     {
         application app;
-        app.add_text_fields(branches);
-        // Let the user select a branch
-        selected_branch = app.get_user_input(command, current_branch_index);
+        // Let the user interact
+        while (true)
+        {
+            app.add_text_fields(branches);
+            selected_branch = app.get_user_input(command, current_branch_index);
+            if (app.get_state() == application::k_quit)
+                return 0;
+            if (app.get_state() == application::k_done)
+                break;
+        }
     }
 
     if (selected_branch == "master")
@@ -101,6 +108,7 @@ display_help()
 {
     std::string help = R"x(
  gitb - ncurses git branch util
+
  Check out or delete git branches
 
    -c
@@ -125,9 +133,13 @@ display_help()
          Select (c)checkout, (d)elete, or force (D)elete
          when navigating the branches. Only for local branches.
 
+   The branch list can be filtered to reduce the number of displayed
+   items by pressing space and entering a search string.
+
    up/down arrow : previous/next branch
     page up/down : previous/next page of branches
            enter : perform git command
+           slash : edit filter text
                q : exit
     )x";
 

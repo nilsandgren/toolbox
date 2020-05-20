@@ -26,6 +26,25 @@ application::~application()
     endwin();
 }
 
+application::state
+application::get_state() const
+{
+    return m_state;
+}
+
+// Copy strings matching current filter
+void
+application::filter_labels(std::vector<std::string>& dst,
+                           std::vector<std::string>& src)
+{
+    for (const auto& item : src)
+    {
+        if (item.find(m_filter) != std::string::npos)
+        {
+            dst.push_back(item);
+        }
+    }
+}
 
 // Add text fields to the view
 void
@@ -34,7 +53,10 @@ application::add_text_fields(std::vector<std::string> & labels)
     free_forms();
     free_windows();
 
-    m_num_fields = labels.size();
+    std::vector<std::string> filtered;
+    filter_labels(filtered, labels);
+
+    m_num_fields = filtered.size();
     m_fields = (FIELD**) calloc(m_num_fields + 1, sizeof(FIELD *));
     if (!m_fields)
     {
@@ -51,7 +73,7 @@ application::add_text_fields(std::vector<std::string> & labels)
         FIELD * field = new_field(1, longest_line, row, col, 0, 0);
         set_new_page(field, row == 0);
         field_opts_on(field, O_VISIBLE);
-        set_field_buffer(field, 0, labels[i].c_str());
+        set_field_buffer(field, 0, filtered[i].c_str());
 
         m_fields[i] = field;
     }
@@ -76,104 +98,214 @@ application::add_text_fields(std::vector<std::string> & labels)
     post_form(m_form);
 }
 
-
-// Let the user select an item among the text fields
-std::string
-application::get_user_input(git_command & command,
-                            int current_branch_index)
+// If command is k_interactive, see if user pressed c, d or D
+// (checkout, delete, force delete). Change the command
+// accordingly and act as if user pressed enter.
+void
+application::change_interactive_command(git_command& command,
+                                        int& user_input)
 {
-    int field_num = 0;
-    if (current_branch_index >= 0)
-        field_num = current_branch_index;
+    switch (user_input)
+    {
+        case '\n':
+        case 'c':
+        {
+            command = git_command::k_checkout;
+            user_input = '\n';
+            break;
+        }
+        case 'd':
+        {
+            command = git_command::k_delete;
+            user_input = '\n';
+            break;
+        }
+        case 'D':
+        {
+            command = git_command::k_force_delete;
+            user_input = '\n';
+            break;
+        }
+        default: break;
+    }
+}
 
+// Change application state based on user input
+void
+application::change_state(int user_input)
+{
+    if (m_state == k_filtering)
+    {
+        // Break out of filter editing state
+        if (user_input == '\n' ||
+            user_input == KEY_UP ||
+            user_input == KEY_DOWN ||
+            (user_input == KEY_BACKSPACE && m_filter.length() == 0))
+        m_state = k_navigating;
+    }
+    else if (user_input == '/')
+    {
+        // Go into filter editing state
+        m_state = k_filtering;
+    }
+    else if (user_input == 'q')
+    {
+        m_state = k_quit;
+    }
+}
+
+void
+application::navigate(int user_input, int& field_num)
+{
+    if (!m_num_fields)
+        return;
+
+    switch (user_input)
+    {
+        case KEY_DOWN:
+            if (field_num < m_num_fields - 1)
+                field_num++;
+            set_current_field(m_form, m_fields[field_num]);
+            break;
+
+        case KEY_UP:
+            if (field_num >= 1)
+                field_num--;
+            set_current_field(m_form, m_fields[field_num]);
+            break;
+
+        case KEY_NPAGE:
+            if (field_num < m_num_fields - m_num_lines)
+                field_num += m_num_lines;
+            else
+                field_num = m_num_fields - 1;
+            set_current_field(m_form, m_fields[field_num]);
+            break;
+
+        case KEY_PPAGE:
+            if (field_num >= m_num_lines)
+                field_num -= m_num_lines;
+            else
+                field_num = 0;
+            set_current_field(m_form, m_fields[field_num]);
+            break;
+    }
+}
+
+void
+application::update_filter(int user_input)
+{
+    if (user_input <= 0xff && isprint(int(user_input)))
+    {
+        m_filter.push_back(char(user_input));
+    }
+    else if (user_input == KEY_BACKSPACE && m_filter.length())
+    {
+        m_filter.pop_back();
+    }
+}
+
+void
+application::select_field(int field_num)
+{
+    if (field_num >= m_num_fields)
+        return;
+    set_field_fore(m_fields[field_num], A_BOLD);
+    mvwprintw(m_inner_window, field_num % m_num_lines, 0, ">");
+}
+
+void
+application::deselect_field(int field_num)
+{
+    if (field_num >= m_num_fields)
+        return;
+    set_field_fore(m_fields[field_num], A_NORMAL);
+    mvwprintw(m_inner_window, field_num % m_num_lines, 0, " ");
+}
+
+void
+application::display_header(const git_command& command)
+{
     // Make a title with the git command and center it
     std::string title = " Select branch to ";
     title += to_string(command) + " ";
     int title_start = (m_width - title.length()) / 2;
     mvwprintw(m_main_window, 0, title_start, title.c_str());
 
-    set_current_field(m_form, m_fields[field_num]);
+}
+
+void
+application::display_footer()
+{
+    if (m_state != k_filtering && m_filter.length() == 0)
+        return;
+
+    // Display filter text in lower left corner
+    int y = m_height - 1;
+    mvwprintw(m_main_window, y, 3, "/");
+    mvwprintw(m_main_window, y, 4, m_filter.c_str());
+    mvwprintw(m_main_window, y, 4 + m_filter.length(), " ");
+}
+
+std::string
+application::get_user_input(git_command & command,
+                            int& current_branch_index)
+{
+    int field_num = 0;
+    if (current_branch_index >= 0)
+        field_num = current_branch_index;
+
+    display_header(command);
+    display_footer();
+
+    if (m_num_fields > field_num)
+        set_current_field(m_form, m_fields[field_num]);
 
     int user_input = 0;
     do
     {
-        if (user_input == 'q')
-            break;
+        state prev_state = m_state;
+        change_state(user_input);
 
-        // If command is k_interactive, see if user pressed c, d or D
-        // (checkout, delete, force delete). Change the command
-        // accordingly and act as if user pressed enter.
-        if (command == git_command::k_interactive)
+        if (m_state != prev_state)
         {
-            switch (user_input)
+            current_branch_index = 0;
+            break;
+        }
+
+        if (m_state == k_navigating)
+        {
+            if (command == git_command::k_interactive)
+                change_interactive_command(command, user_input);
+
+            if (user_input == '\n')
             {
-                case '\n':
-                case 'c':
-                {
-                    command = git_command::k_checkout;
-                    user_input = '\n';
-                    break;
-                }
-                case 'd':
-                {
-                    command = git_command::k_delete;
-                    user_input = '\n';
-                    break;
-                }
-                case 'D':
-                {
-                    command = git_command::k_force_delete;
-                    user_input = '\n';
-                    break;
-                }
-                default: break;
+                m_state = k_done;
+                std::string tmp(field_buffer(current_field(m_form), 0));
+                return tmp.substr(0, tmp.find(" "));
             }
         }
 
-        if (user_input == '\n')
-        {
-            std::string tmp(field_buffer(current_field(m_form), 0));
-            return tmp.substr(0, tmp.find(" "));
-        }
-
         // Clear previous selected field
-        set_field_fore(m_fields[field_num], A_NORMAL);
-        mvwprintw(m_inner_window, field_num % m_num_lines, 0, " ");
+        deselect_field(field_num);
 
-        switch (user_input)
+        if (m_state == k_navigating)
         {
-            case KEY_DOWN:
-                if (field_num < m_num_fields - 1)
-                    field_num++;
-                set_current_field(m_form, m_fields[field_num]);
+            navigate(user_input, field_num);
+        }
+        else if (m_state == k_filtering)
+        {
+            std::string prev_filter = m_filter;
+            update_filter(user_input);
+            if (m_filter != prev_filter)
+            {
+                current_branch_index = 0;
                 break;
-
-            case KEY_UP:
-                if (field_num >= 1)
-                    field_num--;
-                set_current_field(m_form, m_fields[field_num]);
-                break;
-
-            case KEY_NPAGE:
-                if (field_num < m_num_fields - m_num_lines)
-                    field_num += m_num_lines;
-                else
-                    field_num = m_num_fields - 1;
-                set_current_field(m_form, m_fields[field_num]);
-                break;
-
-            case KEY_PPAGE:
-                if (field_num >= m_num_lines)
-                    field_num -= m_num_lines;
-                else
-                    field_num = 0;
-                set_current_field(m_form, m_fields[field_num]);
-                break;
+            }
         }
 
         // Mark current field
-        set_field_fore(m_fields[field_num], A_BOLD);
-        mvwprintw(m_inner_window, field_num % m_num_lines, 0, ">");
+        select_field(field_num);
 
         wrefresh(m_inner_window);
     }
