@@ -40,20 +40,48 @@ class application
         std::string get_selected_label() const;
 
     private:
-        void draw_main_window();
+        // Create the main window with fields for all labels
+        void create_main_window();
+
+        // Free ncurses forms
         void free_forms();
+
+        // Free ncurses windows
         void free_windows();
+
+        // Return longest string in strings
         static int get_longest_length(std::vector<std::string> & strings);
+
+        // Return text representation of Git command
         std::string to_string(const git_command & command);
+
+        // Change 'command' from k_interactive to a specific command, e.g.
+        // k_delete, based on 'user_input'
         void change_interactive_command(git_command& command, int& user_input);
+
+        // Change state based on current state and 'user_input'
         void change_state(int user_input);
+
+        // Navigate in the form
         void navigate(int user_input, int& field_num);
+
+        // Add or remove characters in the label filter based on 'user_input'
         void update_filter(int user_input);
+
+        // Filter labels in 'src', based on current filter, and store in 'dst'
         void filter_labels(std::vector<std::string>& dst,
                            std::vector<std::string>& src);
+
+        // Select the field with number 'field_num'
         void select_field(int field_num);
+
+        // Deselect the field with number 'field_num'
         void deselect_field(int field_num);
+
+        // Display window header containing current command
         void display_header(const git_command& command);
+
+        // Display window footer containing filter string, if any
         void display_footer();
 
     private:

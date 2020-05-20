@@ -56,7 +56,7 @@ application::add_text_labels(std::vector<std::string> & labels,
 }
 
 void
-application::draw_main_window()
+application::create_main_window()
 {
     free_forms();
     free_windows();
@@ -265,7 +265,7 @@ application::get_user_input(git_command & command)
     // Very lazy. Recreate ncurses window from current state since filtering
     // changes the list of labels displayed. Ideally only the list of FIELDs
     // should be modified.
-    draw_main_window();
+    create_main_window();
 
     int field_num = 0;
     if (m_field_index >= 0)

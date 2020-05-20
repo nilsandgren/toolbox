@@ -27,6 +27,10 @@ is provided, checkout, delete, and force delete can be
 performed on the currently selected branch by pressing
 c, d, or D respectively.
 
+The branch list can be filtered to reduce the number of displayed
+items by pressing slash (/) and entering a search string.
+
+
 Description of command line arguments:
 
     -c
@@ -52,9 +56,10 @@ Description of command line arguments:
           when navigating the branches.
           Only for local branches.
 
-    arrow up/down : previous/next branch
+    up/down arrow : previous/next branch
      page up/down : previous/next page of branches
             enter : perform git command
+            slash : edit filter text
                 q : exit
 
 `gitb` is relying on that the output from "git branch" is

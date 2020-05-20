@@ -137,7 +137,7 @@ display_help()
          when navigating the branches. Only for local branches.
 
    The branch list can be filtered to reduce the number of displayed
-   items by pressing space and entering a search string.
+   items by pressing slash (/) and entering a search string.
 
    up/down arrow : previous/next branch
     page up/down : previous/next page of branches
