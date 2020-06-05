@@ -84,6 +84,16 @@ class application
         // Display window footer containing filter string, if any
         void display_footer();
 
+        // Get color pair index for command
+        int command_color(const git_command & command);
+
+        // Change print color
+        void set_color(WINDOW * window,
+                       int color_pair);
+
+        // Reset print color
+        void reset_color(WINDOW * window);
+
     private:
         int m_num_fields = 0;
         int m_field_index = -1;
@@ -102,4 +112,6 @@ class application
         FORM * m_form = nullptr;
         WINDOW * m_main_window = nullptr;
         WINDOW * m_inner_window = nullptr;
+
+        bool m_has_color = false;
 };

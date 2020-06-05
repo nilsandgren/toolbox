@@ -5,18 +5,38 @@
 #include "application.h"
 #include "git.h"
 
+#ifdef COLOR
+#define DEFAULT_ON_DEFAULT 1
+#define GREEN_ON_DEFAULT 2
+#define YELLOW_ON_DEFAULT 3
+#define RED_ON_DEFAULT 4
+#define BLUE_ON_DEFAULT 5
+#endif
+
 
 // Initialize ncurses
 application::application()
 {
     initscr();
     cbreak();
+    #ifdef COLOR
+    m_has_color = has_colors();
+    if (m_has_color)
+    {
+        use_default_colors();
+        start_color();
+        init_pair(DEFAULT_ON_DEFAULT, -1, -1);
+        init_pair(GREEN_ON_DEFAULT, COLOR_GREEN, -1);
+        init_pair(YELLOW_ON_DEFAULT, COLOR_YELLOW, -1);
+        init_pair(RED_ON_DEFAULT, COLOR_RED, -1);
+        init_pair(BLUE_ON_DEFAULT, COLOR_BLUE, -1);
+    }
+    #endif
     noecho();
     set_escdelay(0);
     keypad(stdscr, TRUE);
     curs_set(0);
 }
-
 
 // Deallocate resources and leave ncurses
 application::~application()
@@ -242,8 +262,9 @@ application::display_header(const git_command& command)
     std::string title = " Select branch to ";
     title += to_string(command) + " ";
     int title_start = (m_width - title.length()) / 2;
+    set_color(m_main_window, command_color(command));
     mvwprintw(m_main_window, 0, title_start, title.c_str());
-
+    reset_color(m_main_window);
 }
 
 void
@@ -254,9 +275,11 @@ application::display_footer()
 
     // Display filter text in lower left corner
     int y = m_height - 1;
+    set_color(m_main_window, GREEN_ON_DEFAULT);
     mvwprintw(m_main_window, y, 3, "/");
     mvwprintw(m_main_window, y, 4, m_filter.c_str());
     mvwprintw(m_main_window, y, 4 + m_filter.length(), " ");
+    reset_color(m_main_window);
 }
 
 void
@@ -396,4 +419,48 @@ application::to_string(const git_command & command)
         case git_command::k_force_delete: return "FORCE DELETE";
         case git_command::k_interactive: return "INTERACT WITH (c|d|D)";
     }
+}
+
+int
+application::command_color(const git_command & command)
+{
+    #if COLOR
+    switch(command)
+    {
+        case git_command::k_checkout:
+        case git_command::k_checkout_remote:
+            return GREEN_ON_DEFAULT;
+        case git_command::k_delete:
+            return YELLOW_ON_DEFAULT;
+        case git_command::k_force_delete:
+            return RED_ON_DEFAULT;
+        case git_command::k_interactive:
+            return YELLOW_ON_DEFAULT;
+        default:
+            return DEFAULT_ON_DEFAULT;
+    }
+    #endif
+}
+
+void
+application::set_color(WINDOW * window,
+                       int color_pair)
+{
+    #ifdef COLOR
+    if (!m_has_color)
+        return;
+
+    wattron(window, COLOR_PAIR(color_pair));
+    #endif
+}
+
+void
+application::reset_color(WINDOW * window)
+{
+    #ifdef COLOR
+    if (!m_has_color)
+        return;
+
+    wattron(window, COLOR_PAIR(DEFAULT_ON_DEFAULT));
+    #endif
 }
