@@ -242,6 +242,8 @@ application::select_field(int field_num)
 {
     if (field_num >= m_num_fields)
         return;
+    if (m_state == k_filtering)
+        return;
     set_field_fore(m_fields[field_num], A_BOLD);
     mvwprintw(m_inner_window, field_num % m_num_lines, 0, ">");
 }
