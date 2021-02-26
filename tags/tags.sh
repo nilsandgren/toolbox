@@ -9,8 +9,8 @@ set -e
 tagfile="tags-edgeware"
 
 start_dir="$PWD"
-source_root="/home/nilsa/git/monorepo"
-excludes="--exclude=.git --exclude=build --exclude=objs"
+source_root="/home/nilsa/git/"
+excludes="--exclude=.git --exclude=build --exclude=objs --exclude=env"
 
 function clean_tagfile
 {
@@ -21,17 +21,33 @@ function clean_tagfile
 
 function tag_edgeware_repo
 {
-    directories=("test"
-                 "src/esb2001"
-                 "src/repackaging"
-                 "src/sw-liveingest"
-                 "src/sw-streamer"
-                 "src/platform/drivers"
-                 "src/platform/include"
-                 "src/platform/firmware"
-                 "src/platform/test"
-                 "src/components"
-                 "shared/arcade")
+    directories=("monorepo/test"
+                 "monorepo/products/esb3002"
+                 "monorepo/products/esb3003"
+                 "monorepo/src/drm-gw"
+                 "monorepo/src/esb2001"
+                 "monorepo/src/esb3008"
+                 "monorepo/src/repackaging"
+                 "monorepo/src/sw-liveingest"
+                 "monorepo/src/sw-streamer"
+                 "monorepo/src/platform/drivers"
+                 "monorepo/src/platform/include"
+                 "monorepo/src/platform/firmware"
+                 "monorepo/src/platform/test"
+                 "monorepo/src/components"
+                 "monorepo/src/convoy"
+                 "monorepo/shared/arcade"
+                 "monorepo/src/repackaging/build/app/software-repackager/openresty-prefix"
+                 "monorepo/src/repackaging/build/app/software-repackager/3rd-party/nginx"
+                 "monorepo/src/repackaging/build/lib/3rd-party/bento4/src/bento4_download"
+                 "monorepo/src/repackaging/build/lib/3rd-party/easylogging/easyloggingpp/src/easyloggingpp/src"
+                 "monorepo/utils/media-tools"
+                 "repackaging-poc/repack_poc"
+                 "cloud-api/SDK/sunshine"
+                 "ew-aas/tasks"
+                 "ew-aas/src"
+                 "bento"
+                 "orc")
 
     # find out longest path for nice printing
     max_len=0
@@ -54,7 +70,7 @@ function tag_edgeware_repo
         fi
 
         # print directory name and pad with dots for alignment
-        printf "tagging %s" $directory
+        printf "%s" $directory
         num_dots=$(( $max_len - ${#directory} + 2))
         while [ $num_dots -gt 0 ]; do
             echo -n "."
