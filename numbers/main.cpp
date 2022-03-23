@@ -60,9 +60,23 @@ void printBin(uint64_t value)
     bool skip = true;
     uint64_t mask = 1LLU << 63;
 
+    // Print multiples of 8 bits
+    uint64_t tmp = value;
+    uint64_t skip_bits = 0;
+    while (tmp != 0)
+    {
+        tmp >>= 1;
+        skip_bits++;
+    }
+    skip_bits = (64 - skip_bits) & ~0x07;
+
     printf("  bin: ");
     for (uint64_t i = 0; i < 64; i++)
     {
+        if (i == skip_bits)
+        {
+            skip = false;
+        }
         if (value & mask)
         {
             printf("1");
