@@ -1,4 +1,4 @@
-#!/usr/bin/python3.6
+#!/usr/bin/python3
 
 """srtime - SubRip Time - Change timing in SRT files"""
 
