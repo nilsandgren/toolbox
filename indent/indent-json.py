@@ -1,5 +1,13 @@
 #!/usr/bin/python3
 
+"""Indent JSON from file path or stdin.
+
+   indent-json.py file.json
+   or
+   cat file.json | indent.json
+
+"""
+
 import json
 import sys
 
