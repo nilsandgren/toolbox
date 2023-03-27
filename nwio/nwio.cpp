@@ -58,6 +58,7 @@ std::string toString(BandwidthUnit unit)
         case kMegaBits: return "Mbit/s";
         case kGigaBits: return "Gbit/s";
     }
+    return "";
 }
 
 const int32_t kRunForever = -1;
