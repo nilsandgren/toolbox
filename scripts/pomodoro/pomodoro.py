@@ -124,14 +124,17 @@ def pause(minutes):
     lockMinutes = minutes
 
     print()
+    chime()
     colorPrint(COLOR_FG_MAG, f"Do something else for {lockMinutes} minutes")
     printSuggestions()
 
     headsUpWarning()
     colorPrint(COLOR_FG_MAG, f"Locking for {lockMinutes} minutes now")
     time.sleep(1.5)
+    # chime 1..x times to indicate length of pause
+    chime(lockMinutes // 5)
     for i in range(0, lockMinutes):
-        if i % 5 == 0:
+        if i != 0 and i % 5 == 0:
             chime()
         # Lock every minute
         if not DEMO:
@@ -170,7 +173,7 @@ def main():
 
     pomodoro()
 
-    pause_minutes = [7, 7, 7, 14]
+    pause_minutes = [5, 10, 10, 15]
     pause_index = random.choice(range(0, len(pause_minutes)))
 
     def getPauseMinutes():
