@@ -1,0 +1,21 @@
+# DoBeDo:
+#   • Do a thing again and again..
+#   • Display output without flickering sadness
+#
+#  dobedo <command>
+
+#!/bin/bash
+
+TMPFILE="/tmp/dobedo.tmp"
+
+while true; do
+  # Clear or create file
+  echo -n '' > $TMPFILE
+  # Write command output to file
+  "$@" &> $TMPFILE
+  # Clear display
+  clear
+  # Display file contents
+  cat $TMPFILE
+  sleep 4
+done
