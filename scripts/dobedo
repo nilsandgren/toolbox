@@ -3,6 +3,8 @@
 #   • Display output without flickering sadness
 #
 #  dobedo <command>
+#  or
+#  dobedo "expression to evaluate"
 
 #!/bin/bash
 
@@ -12,7 +14,7 @@ while true; do
   # Clear or create file
   echo -n '' > $TMPFILE
   # Write command output to file
-  "$@" &> $TMPFILE
+  eval "$@" &> $TMPFILE
   # Clear display
   clear
   # Display file contents
