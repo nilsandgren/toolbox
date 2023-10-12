@@ -10,8 +10,9 @@ import time
 DEMO = False
 
 WORK_TIME_MINUTES = 20
-WORK_FUZZ_MINUTES = 10
-HEADS_UP_SECONDS = 10
+WORK_FUZZ_MINUTES = 0
+HEADS_UP_SECONDS = 15
+PAUSE_MINUTES = [10, 10, 10, 10]
 
 COLOR_FG_RED = '\33[31m'
 COLOR_FG_GRE = '\33[32m'
@@ -24,7 +25,6 @@ SOUND_PLAYER = "mplayer"
 SOUND_PATH = "chime.wav"
 
 TODAYS_SUGGESTIONS = [
-    "Go to the grocery store"
 ]
 
 GENERAL_SUGGESTIONS = [
@@ -173,12 +173,11 @@ def main():
 
     pomodoro()
 
-    pause_minutes = [5, 10, 10, 15]
-    pause_index = random.choice(range(0, len(pause_minutes)))
+    pause_index = random.choice(range(0, len(PAUSE_MINUTES)))
 
     def getPauseMinutes():
         nonlocal pause_index
-        result = pause_minutes[pause_index % len(pause_minutes)]
+        result = PAUSE_MINUTES[pause_index % len(PAUSE_MINUTES)]
         pause_index += 1
         return result
 
