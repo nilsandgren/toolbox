@@ -23,6 +23,7 @@ COLOR_RESET  = '\33[0m'
 
 SOUND_PLAYER = "mplayer"
 SOUND_PATH = "chime.wav"
+SOUND_ON = True
 
 TODAYS_SUGGESTIONS = [
 ]
@@ -62,6 +63,8 @@ def runCommand(command):
 
 
 def chime(times=1):
+    if not SOUND_ON:
+        return
     for _ in range(0, times):
         time.sleep(0.2)
         try:
@@ -103,9 +106,9 @@ def printSuggestions():
         colorPrint(color, f"  - {item}")
         time.sleep(0.2)
     print()
-    time.sleep(1)
+    ourSleep(1)
     print("Suggestion:")
-    time.sleep(1)
+    ourSleep(1)
     tombola(GENERAL_SUGGESTIONS + TODAYS_SUGGESTIONS)
     print()
 
