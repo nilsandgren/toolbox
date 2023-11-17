@@ -1,0 +1,30 @@
+#!/bin/bash
+
+# use vim-build as makeprg in vim to get build results in quickfix list
+#
+# Usage:
+#   vim-build <build options>
+#
+# Example from .vimrc (with vim-build in PATH):
+#
+#     set makeprg=vim-build
+#     fun! VimBuild()
+#         " clear quickfix list
+#         call setqflist([])
+#         " clear scratch buffer without echoing "Press ENTER..."
+#         silent! !clear
+#         silent! !echo "Building..."
+#         make my-make-target
+#         " open quickfix list if it has any content
+#         cwindow
+#     endfun
+#     " -- make with <leader>m
+#     map <leader>m :call VimBuild()<cr>
+
+# Build with make
+#   - redirect stderr to stdout
+#   - grep for warnings and errors
+#   - remove ansi color codes
+cd build
+make $@ 2>&1 | grep -E "note:|warning:|error:" | sed -r "s/\x1B\[([0-9]{1,2}(;[0-9]{1,2})?)?[mGK]//g"
+cd - > /dev/null
