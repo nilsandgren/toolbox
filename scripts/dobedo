@@ -14,7 +14,7 @@ while true; do
   # Clear or create file
   echo -n '' > $TMPFILE
   # Write command output to file
-  eval "$@" &> $TMPFILE
+  eval "$@" 2>&1 > $TMPFILE
   # Clear display
   clear
   # Display file contents
