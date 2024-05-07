@@ -9,12 +9,12 @@ fi
 TARGET=$1
 
 while true; do
-    RESPONSE=`curl -s -w "%{http_code}\\n" -o /dev/null $TARGET`
+    RESPONSE=`curl -m 5 -s -w "%{http_code}\\n" -o /dev/null $TARGET`
 
     if [ $RESPONSE = "200"  ]; then
-        echo "$TARGET is up"
+        echo "$TARGET is available"
         exit
     fi
     echo "Waiting for $TARGET"
-    sleep 2
+    sleep 30
 done
