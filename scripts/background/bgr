@@ -1,0 +1,62 @@
+#!/bin/bash
+
+########################################################
+## Randomly change background image using gsettings
+########################################################
+
+# Interval (in seconds) for changing the background image
+INTERVAL=120
+
+# The display mode to use
+# One of: wallpaper, centered, scaled, stretched, zoom, spanned
+# DISPLAY_MODE="scaled"
+DISPLAY_MODE="zoom"
+
+RECURSIVE=true
+
+if [ $# -eq 0 ]; then
+  echo "  Usage: $0 <image directory>"
+  exit
+fi
+
+function set_background
+{
+  FILE="$1"
+  echo Setting background: $FILE
+
+  # Set the background
+  gsettings set org.gnome.desktop.background picture-uri-dark file://$FILE
+  gsettings set org.gnome.desktop.background picture-uri file://$FILE
+
+  # Set the display mode
+  gsettings set org.gnome.desktop.background picture-options $DISPLAY_MODE
+}
+
+if [ -f $1 ]; then
+  set_background $1
+  exit
+fi
+
+
+if [ ! -d $1 ]; then
+  echo "$1 is not a directory"
+  exit
+fi
+
+
+# Find images and randomize order
+if $RECURSIVE; then
+  DEPTH=""
+else
+  DEPTH="-maxdepth 1"
+fi
+FILES=$(find $1 $DEPTH -type f \( -iname \*.jpeg -o -iname \*.jpg -o -iname \*.png -o -iname \*.bmp \) | sort -R)
+
+OIFS="$IFS"
+IFS=$'\n'
+for FILE in $FILES;
+do
+  set_background $FILE
+  sleep $INTERVAL
+done
+IFS="$IOFS"
