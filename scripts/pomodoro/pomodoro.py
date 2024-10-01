@@ -3,6 +3,7 @@
 from playsound import playsound # pip install playsound
 import random
 import subprocess
+import os
 import sys
 import time
 
@@ -25,26 +26,21 @@ SOUND_PLAYER = "mplayer"
 SOUND_PATH = "chime.wav"
 SOUND_ON = True
 
+REMOVE_SUGGESTED_TASK = True
 TODAYS_SUGGESTIONS = [
 ]
 
 GENERAL_SUGGESTIONS = [
     "Water some plants",
     "Yoga or stretch on the floor",
-    "Yoga or stretch on a chair",
     "Take a short walk",
     "Take care of some laundry",
-    "Eat some fruit",
     "Do a body scan",
     "Clean a bathroom",
     "Do a breathing exercise",
     "Pick up some dirty dishes",
-    "Prepare some fire wood",
-    "Make a sandwich",
-    "Lift some weights",
     "Just rest"
 ]
-
 
 
 def ourSleep(seconds):
@@ -73,8 +69,8 @@ def chime(times=1):
             pass
 
 
-def colorPrint(color, string):
-    print(f"{color}{string}{COLOR_RESET}")
+def colorPrint(color, string, **kwargs):
+    print(f"{color}{string}{COLOR_RESET}", **kwargs)
 
 
 def tombola(suggestions):
@@ -84,22 +80,23 @@ def tombola(suggestions):
     padding = "                           "
     while sleepTime < 2:
         number = (number + 1) % maxNumber
-        print(f"  - {suggestions[number]}{padding}\r", end="")
+        print(f"  - {suggestions[number][1]}{padding}\r", end="")
         sleepTime *= 1 + 0.5 * random.random()
         time.sleep(sleepTime)
 
     for _ in range(0,5):
         print(f"    {padding}{padding}\r", end="")
         time.sleep(.5)
-        print(f"  - {suggestions[number]}{padding}\r", end="")
+        print(f"  - {suggestions[number][1]}{padding}\r", end="")
         time.sleep(.5)
+
+    if REMOVE_SUGGESTED_TASK:
+        suggestions.pop(number)
 
     print()
 
 
-def printSuggestions():
-    suggestions = [(COLOR_FG_GRE, s) for s in GENERAL_SUGGESTIONS]
-    suggestions += [(COLOR_FG_YEL, s) for s in TODAYS_SUGGESTIONS]
+def printSuggestions(suggestions):
     print()
     print("For instance: ")
     for color, item in suggestions:
@@ -109,7 +106,7 @@ def printSuggestions():
     ourSleep(1)
     print("Suggestion:")
     ourSleep(1)
-    tombola(GENERAL_SUGGESTIONS + TODAYS_SUGGESTIONS)
+    tombola(suggestions)
     print()
 
 
@@ -123,13 +120,13 @@ def headsUpWarning():
         ourSleep(1)
 
 
-def pause(minutes):
+def pause(minutes, suggestions):
     lockMinutes = minutes
 
     print()
     chime()
     colorPrint(COLOR_FG_MAG, f"Do something else for {lockMinutes} minutes")
-    printSuggestions()
+    printSuggestions(suggestions)
 
     headsUpWarning()
     colorPrint(COLOR_FG_MAG, f"Locking for {lockMinutes} minutes now")
@@ -147,10 +144,14 @@ def pause(minutes):
 
 
 def backFromPause():
+    os.system("clear")
     pomodoro()
     chime(3)
     print()
-    colorPrint(COLOR_FG_GRE, "   Good that you took some time for yourself!")
+    colorPrint(COLOR_FG_RED, "   ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ")
+    colorPrint(COLOR_FG_GRE, "   Good that you took some ")
+    colorPrint(COLOR_FG_GRE, "      time for yourself    ")
+    colorPrint(COLOR_FG_RED, "   ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ")
     print()
 
 
@@ -172,6 +173,45 @@ def pomodoro():
     colorPrint(COLOR_FG_RED, "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ")
 
 
+def printPercentage(percentage):
+    step = 100/70.
+    count = 0
+    print(f" [", end="")
+    while percentage >= step:
+        percentage -= step
+        colorPrint(COLOR_FG_GRE, "█", end="")
+        count += 1
+
+    fraction = percentage / step
+
+    if fraction < 1/16:
+        colorPrint(COLOR_FG_GRE, " ",  end="")
+    elif fraction < 1/8:
+        colorPrint(COLOR_FG_GRE, "▏",  end="")
+    elif fraction < 1/4:
+        colorPrint(COLOR_FG_GRE, "▎",  end="")
+    elif fraction < 3/8:
+        colorPrint(COLOR_FG_GRE, "▍",  end="")
+    elif fraction < 1/2:
+        colorPrint(COLOR_FG_GRE, "▌",  end="")
+    elif fraction < 5/8:
+        colorPrint(COLOR_FG_GRE, "▋", end="")
+    elif fraction < 3/4:
+        colorPrint(COLOR_FG_GRE, "▊", end="")
+    elif fraction < 7/8:
+        colorPrint(COLOR_FG_GRE, "▊", end="")
+    else:
+        colorPrint(COLOR_FG_GRE, "▉", end="")
+
+    count += 1
+
+    while count < int(100 / step + 0.5):
+        colorPrint(COLOR_FG_GRE, " ", end="")
+        count += 1
+
+    print("]\r", end="")
+
+
 def main():
 
     pomodoro()
@@ -184,27 +224,29 @@ def main():
         pause_index += 1
         return result
 
-    workMinutes = None
+    workSeconds = None
     if len(sys.argv) > 1:
-        workMinutes = int(sys.argv[1])
+        workSeconds = int(sys.argv[1]) * 60
 
-    if workMinutes == 0:
-        pause(getPauseMinutes())
+    suggestions = [(COLOR_FG_GRE, s) for s in GENERAL_SUGGESTIONS]
+    suggestions += [(COLOR_FG_YEL, s) for s in TODAYS_SUGGESTIONS]
+    if workSeconds == 0:
+        pause(getPauseMinutes(), suggestions)
         backFromPause()
 
     while True:
         print()
-        print("You can work for a while now")
-        if workMinutes is None or workMinutes <= 0:
-            workMinutes = int(WORK_TIME_MINUTES + random.random() * WORK_FUZZ_MINUTES)
+        if workSeconds is None or workSeconds <= 0:
+            workSeconds = int(WORK_TIME_MINUTES + random.random() * WORK_FUZZ_MINUTES) * 60
 
-        while workMinutes > 0:
-            string = "|" * workMinutes + " " * workMinutes
-            print(f" {string}\r", end="")
-            ourSleep(60)
-            workMinutes -= 1
+        while workSeconds > 0:
+            percentage = 100 * workSeconds / (WORK_TIME_MINUTES * 60)
+            printPercentage(percentage)
+            ourSleep(5)
+            workSeconds -= 5
+        printPercentage(0)
 
-        pause(getPauseMinutes())
+        pause(getPauseMinutes(), suggestions)
         backFromPause()
 
 
