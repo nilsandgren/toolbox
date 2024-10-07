@@ -174,6 +174,7 @@ def pomodoro():
 
 
 def printPercentage(percentage):
+    percentage = min(percentage, 100)
     step = 100/70.
     count = 0
     print(f" [", end="")
