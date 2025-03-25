@@ -7,10 +7,10 @@ import os
 import sys
 import time
 
-# Speed up ourSleep to test program
+# Speed up our_sleep to test program
 DEMO = False
 
-WORK_TIME_MINUTES = 20
+WORK_TIME_MINUTES = 25
 WORK_FUZZ_MINUTES = 0
 HEADS_UP_SECONDS = 15
 PAUSE_MINUTES = [10, 10, 10, 10]
@@ -43,14 +43,14 @@ GENERAL_SUGGESTIONS = [
 ]
 
 
-def ourSleep(seconds):
+def our_sleep(seconds):
     demo = False
     if DEMO:
         seconds /= 200.0
     time.sleep(seconds)
 
 
-def runCommand(command):
+def run_command(command):
     proc = subprocess.Popen(command.split(),
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
@@ -69,20 +69,20 @@ def chime(times=1):
             pass
 
 
-def colorPrint(color, string, **kwargs):
+def color_print(color, string, **kwargs):
     print(f"{color}{string}{COLOR_RESET}", **kwargs)
 
 
 def tombola(suggestions):
-    maxNumber = len(suggestions) - 1;
-    number = int(random.random() * maxNumber + 0.5)
-    sleepTime = 0.1 / maxNumber
+    max_num = len(suggestions) - 1;
+    number = int(random.random() * max_num + 0.5)
+    sleep_time = 0.1 / max_num
     padding = "                           "
-    while sleepTime < 2:
-        number = (number + 1) % maxNumber
+    while sleep_time < 2:
+        number = (number + 1) % max_num
         print(f"  - {suggestions[number][1]}{padding}\r", end="")
-        sleepTime *= 1 + 0.5 * random.random()
-        time.sleep(sleepTime)
+        sleep_time *= 1 + 0.5 * random.random()
+        time.sleep(sleep_time)
 
     for _ in range(0,5):
         print(f"    {padding}{padding}\r", end="")
@@ -96,118 +96,118 @@ def tombola(suggestions):
     print()
 
 
-def printSuggestions(suggestions):
+def print_suggestions(suggestions):
     print()
     print("For instance: ")
     for color, item in suggestions:
-        colorPrint(color, f"  - {item}")
+        color_print(color, f"  - {item}")
         time.sleep(0.2)
     print()
-    ourSleep(1)
+    our_sleep(1)
     print("Suggestion:")
-    ourSleep(1)
+    our_sleep(1)
     tombola(suggestions)
     print()
 
 
-def headsUpWarning():
-    headsUpSeconds = HEADS_UP_SECONDS
+def heads_up_warning():
+    heads_up = HEADS_UP_SECONDS
 
-    print(f"Locking the screen in {headsUpSeconds} seconds")
-    for i in range(headsUpSeconds, -1, -1):
-        string = "|" * i + " " * (headsUpSeconds - i)
+    print(f"Locking the screen in {heads_up} seconds")
+    for i in range(heads_up, -1, -1):
+        string = "|" * i + " " * (heads_up - i)
         print(f" {string}\r", end="")
-        ourSleep(1)
+        our_sleep(1)
 
 
 def pause(minutes, suggestions):
-    lockMinutes = minutes
+    lock_minutes = minutes
 
     print()
     chime()
-    colorPrint(COLOR_FG_MAG, f"Do something else for {lockMinutes} minutes")
-    printSuggestions(suggestions)
+    color_print(COLOR_FG_MAG, f"Do something else for {lock_minutes} minutes")
+    print_suggestions(suggestions)
 
-    headsUpWarning()
-    colorPrint(COLOR_FG_MAG, f"Locking for {lockMinutes} minutes now")
+    heads_up_warning()
+    color_print(COLOR_FG_MAG, f"Locking for {lock_minutes} minutes now")
     time.sleep(1.5)
     # chime 1..x times to indicate length of pause
-    chime(lockMinutes // 5)
-    for i in range(0, lockMinutes):
+    chime(lock_minutes // 5)
+    for i in range(0, lock_minutes):
         if i != 0 and i % 5 == 0:
             chime()
         # Lock every minute
         if not DEMO:
-            runCommand("xdg-screensaver lock")
-        ourSleep(60)
+            run_command("xdg-screensaver lock")
+        our_sleep(60)
         print(f" Locked {i+1} minutes\r", end="")
 
 
-def backFromPause():
+def back_from_pause():
     os.system("clear")
     pomodoro()
     chime(3)
     print()
-    colorPrint(COLOR_FG_RED, "   ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ")
-    colorPrint(COLOR_FG_GRE, "   Good that you took some ")
-    colorPrint(COLOR_FG_GRE, "      time for yourself    ")
-    colorPrint(COLOR_FG_RED, "   ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ")
+    color_print(COLOR_FG_RED, "   ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ")
+    color_print(COLOR_FG_GRE, "   Good that you took some ")
+    color_print(COLOR_FG_GRE, "      time for yourself    ")
+    color_print(COLOR_FG_RED, "   ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ♥ ")
     print()
 
 
 def pomodoro():
-    colorPrint(COLOR_FG_GRE, " ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀")
-    colorPrint(COLOR_FG_GRE, "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ")
-    colorPrint(COLOR_FG_GRE, "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠻⣶⡆⠀⠿⠀⣶⠒⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ")
-    colorPrint(COLOR_FG_GRE, "⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣴⠾⠛⢹⣶⡤⢶⣿⡟⠶⠦⠄⠀⠀⠀⠀⠀⠀⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⠀⠀⠀⣠⣶⣤⣤⣤⣤⣴⠂⠸⠋⢀⣄⡉⠓⠀⠲⣶⣾⣿⣷⣄⠀⠀⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⠀⢀⣾⡿⠋⠁⣠⣤⣿⡟⢀⣠⣾⣿⣿⣿⣷⣶⣤⣼⣿⣿⣿⣿⣆⠀⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⠀⣾⡟⠀⣰⣿⣿⣿⣿⣷⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⢸⡿⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⢸⡇⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⢸⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⠀⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⠀⠀⠀⠀⠉⠛⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠀⠀⠀⠀⠀⠀⠀ ")
-    colorPrint(COLOR_FG_RED, "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ")
+    color_print(COLOR_FG_GRE, " ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀")
+    color_print(COLOR_FG_GRE, "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣿⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ")
+    color_print(COLOR_FG_GRE, "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠛⠻⣶⡆⠀⠿⠀⣶⠒⠊⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ")
+    color_print(COLOR_FG_GRE, "⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣴⠾⠛⢹⣶⡤⢶⣿⡟⠶⠦⠄⠀⠀⠀⠀⠀⠀⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⠀⠀⠀⣠⣶⣤⣤⣤⣤⣴⠂⠸⠋⢀⣄⡉⠓⠀⠲⣶⣾⣿⣷⣄⠀⠀⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⠀⢀⣾⡿⠋⠁⣠⣤⣿⡟⢀⣠⣾⣿⣿⣿⣷⣶⣤⣼⣿⣿⣿⣿⣆⠀⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⠀⣾⡟⠀⣰⣿⣿⣿⣿⣷⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⢸⡿⠀⣼⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⢸⡇⢰⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⢸⣿⣾⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡇⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⠸⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠁⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⠀⢻⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠃⠀⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⠀⠀⠙⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⠟⠁⠀⠀⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⠀⠀⠀⠀⠉⠛⠿⢿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡿⠟⠋⠀⠀⠀⠀⠀⠀⠀ ")
+    color_print(COLOR_FG_RED, "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠉⠉⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀ ")
 
 
-def printPercentage(percentage):
+def print_percentage(percentage):
     percentage = min(percentage, 100)
     step = 100/70.
     count = 0
     print(f" [", end="")
     while percentage >= step:
         percentage -= step
-        colorPrint(COLOR_FG_GRE, "█", end="")
+        color_print(COLOR_FG_GRE, "█", end="")
         count += 1
 
     fraction = percentage / step
 
     if fraction < 1/16:
-        colorPrint(COLOR_FG_GRE, " ",  end="")
+        color_print(COLOR_FG_GRE, " ",  end="")
     elif fraction < 1/8:
-        colorPrint(COLOR_FG_GRE, "▏",  end="")
+        color_print(COLOR_FG_GRE, "▏",  end="")
     elif fraction < 1/4:
-        colorPrint(COLOR_FG_GRE, "▎",  end="")
+        color_print(COLOR_FG_GRE, "▎",  end="")
     elif fraction < 3/8:
-        colorPrint(COLOR_FG_GRE, "▍",  end="")
+        color_print(COLOR_FG_GRE, "▍",  end="")
     elif fraction < 1/2:
-        colorPrint(COLOR_FG_GRE, "▌",  end="")
+        color_print(COLOR_FG_GRE, "▌",  end="")
     elif fraction < 5/8:
-        colorPrint(COLOR_FG_GRE, "▋", end="")
+        color_print(COLOR_FG_GRE, "▋", end="")
     elif fraction < 3/4:
-        colorPrint(COLOR_FG_GRE, "▊", end="")
+        color_print(COLOR_FG_GRE, "▊", end="")
     elif fraction < 7/8:
-        colorPrint(COLOR_FG_GRE, "▊", end="")
+        color_print(COLOR_FG_GRE, "▊", end="")
     else:
-        colorPrint(COLOR_FG_GRE, "▉", end="")
+        color_print(COLOR_FG_GRE, "▉", end="")
 
     count += 1
 
     while count < int(100 / step + 0.5):
-        colorPrint(COLOR_FG_GRE, " ", end="")
+        color_print(COLOR_FG_GRE, " ", end="")
         count += 1
 
     print("]\r", end="")
@@ -219,36 +219,36 @@ def main():
 
     pause_index = random.choice(range(0, len(PAUSE_MINUTES)))
 
-    def getPauseMinutes():
+    def get_pause_minutes():
         nonlocal pause_index
         result = PAUSE_MINUTES[pause_index % len(PAUSE_MINUTES)]
         pause_index += 1
         return result
 
-    workSeconds = None
+    work_seconds = None
     if len(sys.argv) > 1:
-        workSeconds = int(sys.argv[1]) * 60
+        work_seconds = int(sys.argv[1]) * 60
 
     suggestions = [(COLOR_FG_GRE, s) for s in GENERAL_SUGGESTIONS]
     suggestions += [(COLOR_FG_YEL, s) for s in TODAYS_SUGGESTIONS]
-    if workSeconds == 0:
-        pause(getPauseMinutes(), suggestions)
-        backFromPause()
+    if work_seconds == 0:
+        pause(get_pause_minutes(), suggestions)
+        back_from_pause()
 
     while True:
         print()
-        if workSeconds is None or workSeconds <= 0:
-            workSeconds = int(WORK_TIME_MINUTES + random.random() * WORK_FUZZ_MINUTES) * 60
+        if work_seconds is None or work_seconds <= 0:
+            work_seconds = int(WORK_TIME_MINUTES + random.random() * WORK_FUZZ_MINUTES) * 60
 
-        while workSeconds > 0:
-            percentage = 100 * workSeconds / (WORK_TIME_MINUTES * 60)
-            printPercentage(percentage)
-            ourSleep(5)
-            workSeconds -= 5
-        printPercentage(0)
+        while work_seconds > 0:
+            percentage = 100 * work_seconds / (WORK_TIME_MINUTES * 60)
+            print_percentage(percentage)
+            our_sleep(5)
+            work_seconds -= 5
+        print_percentage(0)
 
-        pause(getPauseMinutes(), suggestions)
-        backFromPause()
+        pause(get_pause_minutes(), suggestions)
+        back_from_pause()
 
 
 if __name__ == '__main__':
