@@ -1,0 +1,42 @@
+#!/bin/bash
+
+# Print WiFi qualisy, SSID or AP using iwconfig
+
+quality() {
+    QUALITY=$(iwconfig 2>&1 | grep Quality | awk '{print $2}' | cut -d "=" -f 2)
+    echo $QUALITY
+}
+
+ssid() {
+    SSID_LINE=$(iwconfig 2>&1 | grep SSID)
+    SSID=$(echo -n $SSID_LINE | cut -d "\"" -f 2)
+    echo $SSID
+}
+
+ap() {
+    AP_LINE=$(iwconfig 2>&1 | grep "Access Point")
+    AP=$(echo -n $AP_LINE | awk -F 'Access Point:' '{print $2}')
+    echo $AP
+}
+
+wifi_property() {
+    if [[ $1 == "quality" ]]; then
+        quality;
+        exit;
+    fi
+    if [[ $1 == "ssid" ]]; then
+        ssid;
+        exit;
+    fi
+    if [[ $1 == "ap" ]]; then
+        ap;
+        exit;
+    fi
+    echo "Unknown argument to wifi: $1"
+}
+
+if [[ $# -eq 1 ]]; then
+   wifi_property $1
+   exit
+fi
+wifi_property "quality"
