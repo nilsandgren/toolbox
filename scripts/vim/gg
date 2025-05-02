@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# gg - git grep for stuff and open matches in vim
+#
+# When the list of matches opens, use gF to jump to the file:line match
+# under the cursor. Use :q to get back to the list of matching lines.
+#
+# Nifty mapping for opening matches with:
+# nnoremap ,o <C-w>gF
+#
+# Usage:
+#   gg <pattern>
+#   Case-insensitive substring search for pattern.
+#   Line numbers are included.
+#
+#   gg <grep options> <pattern>
+#   Add your own git grep options. Make sure to add -n to get line numbers.
+
+# set -ex
+
+MATCHFILE="$(mktemp)"
+
+function search
+{
+  if [ $# -eq 1 ]; then
+    git grep -Iin "$@" * > "$MATCHFILE"
+  else
+    git grep -n "$@" > "$MATCHFILE"
+  fi
+  if [ $? -eq 0 ]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+function remove_match_file
+{
+  rm "$MATCHFILE"
+  if [ $? -ne 0 ]; then
+    echo "Failed to remove $MATCHFILE"
+  fi
+}
+
+echo "Searching..."
+search "$@"
+result=$?
+
+if [ $result -eq 0 ]; then
+  echo "Done"
+  vim "$MATCHFILE"
+else
+  echo "No matches found"
+fi
+
+remove_match_file
