@@ -5,20 +5,25 @@
 ########################################################
 
 # Interval (in seconds) for changing the background image
-INTERVAL=120
+INTERVAL=${INTERVAL:-120}
 
 # The display mode to use
 # One of: wallpaper, centered, scaled, stretched, zoom, spanned
-# DISPLAY_MODE="scaled"
-DISPLAY_MODE="zoom"
+MODE=${MODE:-zoom}
 
 RECURSIVE=true
 
 if [ $# -eq 0 ]; then
-  echo "  Usage: $0 <image directory>"
+  echo "  Usage: $0 [<directory> | <file>] ..."
   exit
 fi
 
+# Set interval to 0 if there is only one argument and it is a file
+if [[ $# -eq 1 && -f $1 ]]; then
+    INTERVAL=0
+fi
+
+# Function that sets $1 as background using gsettings
 function set_background
 {
   FILE="$1"
@@ -29,34 +34,37 @@ function set_background
   gsettings set org.gnome.desktop.background picture-uri file://$FILE
 
   # Set the display mode
-  gsettings set org.gnome.desktop.background picture-options $DISPLAY_MODE
+  gsettings set org.gnome.desktop.background picture-options $MODE
 }
 
-if [ -f $1 ]; then
-  set_background $1
-  exit
-fi
+# Function that calls set_background for all images found in $1
+function process_directory
+{
+  # Find images and randomize order
+  if $RECURSIVE; then
+    DEPTH=""
+  else
+    DEPTH="-maxdepth 1"
+  fi
+  FILES=$(find $1 $DEPTH -type f \( -iname \*.jpeg -o -iname \*.jpg -o -iname \*.png -o -iname \*.bmp \) | sort -R)
+  
+  OIFS="$IFS"
+  IFS=$'\n'
+  for FILE in $FILES;
+  do
+    set_background $FILE
+    sleep $INTERVAL
+  done
+  IFS="$OIFS"
+}
 
-
-if [ ! -d $1 ]; then
-  echo "$1 is not a directory"
-  exit
-fi
-
-
-# Find images and randomize order
-if $RECURSIVE; then
-  DEPTH=""
-else
-  DEPTH="-maxdepth 1"
-fi
-FILES=$(find $1 $DEPTH -type f \( -iname \*.jpeg -o -iname \*.jpg -o -iname \*.png -o -iname \*.bmp \) | sort -R)
-
-OIFS="$IFS"
-IFS=$'\n'
-for FILE in $FILES;
+for ARGUMENT in "$@"
 do
-  set_background $FILE
-  sleep $INTERVAL
+  if [ -f $ARGUMENT ]; then
+    set_background "$ARGUMENT"
+    sleep $INTERVAL
+  fi
+  if [ -d $ARGUMENT ]; then
+    process_directory "$ARGUMENT"
+  fi
 done
-IFS="$IOFS"
