@@ -30,8 +30,8 @@ function set_background
   echo Setting background: $FILE
 
   # Set the background
-  gsettings set org.gnome.desktop.background picture-uri-dark file://$FILE
-  gsettings set org.gnome.desktop.background picture-uri file://$FILE
+  gsettings set org.gnome.desktop.background picture-uri-dark "file://$FILE"
+  gsettings set org.gnome.desktop.background picture-uri "file://$FILE"
 
   # Set the display mode
   gsettings set org.gnome.desktop.background picture-options $MODE
@@ -60,11 +60,11 @@ function process_directory
 
 for ARGUMENT in "$@"
 do
-  if [ -f $ARGUMENT ]; then
+  if [ -f "$ARGUMENT" ]; then
     set_background "$ARGUMENT"
     sleep $INTERVAL
   fi
-  if [ -d $ARGUMENT ]; then
+  if [ -d "$ARGUMENT" ]; then
     process_directory "$ARGUMENT"
   fi
 done
