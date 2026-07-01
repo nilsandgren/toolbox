@@ -7,9 +7,10 @@
 set -e
 
 tagfile="vim-tags"
-
 start_dir="$PWD"
-source_root="$HOME/git/"
+tags_directory="$HOME"
+ctags_executable="/usr/bin/ctags-universal"
+
 excludes="--exclude=.git \
           --exclude=build \
           --exclude=install \
@@ -18,6 +19,8 @@ excludes="--exclude=.git \
           --exclude=*.js \
           --exclude=NDI*/* \
           --exclude=*.tgz \
+          --exclude=*.o \
+          --exclude=*.d \
           --exclude=*.tar.gz*"
 
 function clean_tagfile
@@ -42,10 +45,14 @@ function tag_source_directories
         fi
     done
 
-
-    cd "$source_root"
+    cd "$tags_directory"
     for directory in ${directories[*]}
     do
+        if [ ! -e "$directory" ]; then
+            echo "EEEK: $directory"
+            continue
+        fi
+
         # print directory name and pad with dots for alignment
         printf "%s" $directory
         num_dots=$(( $max_len - ${#directory} + 2))
@@ -54,17 +61,12 @@ function tag_source_directories
             num_dots=$(( $num_dots - 1 ))
         done
 
-        if [ ! -e "$directory" ]; then
-            echo ": Not found"
-            continue
-        fi
-
         # lets time the tagging
         start_time=$SECONDS
-        ctags -a -R $excludes --links=no --c++-kinds=+p --fields=+iaS --extras=+q -f ${tagfile} ${directory}
+        $ctags_executable -a -R $excludes --recurse --links=no -f ${tagfile} ${directory} 2> >(grep -v "ignoring null tag" >&2)
 
         duration=$(( SECONDS - start_time ))
-        printf ": Done (%2d sec)\n" $duration
+        printf "done (%2d sec)\n" $duration
     done
     cd "$start_dir"
 }
@@ -74,7 +76,7 @@ global_start=$SECONDS
 
 clean_tagfile
 
-tag_source_directories $@
+tag_source_directories
 
 global_duration=$(( SECONDS - global_start ))
-printf "\nAll the things tagged in %d seconds\n\n" $global_duration
+printf "\nall the things tagged in %d seconds\n\n" $global_duration
